@@ -1,11 +1,13 @@
 import { BRAND_META } from '../data/memorandum';
+import type { LegalTab } from './LegalModal';
 import { ResilientImage } from './ResilientImage';
 
 interface ContactFooterProps {
   onOpenInquiry: () => void;
+  onOpenLegal: (tab: LegalTab) => void;
 }
 
-export function ContactFooter({ onOpenInquiry }: ContactFooterProps) {
+export function ContactFooter({ onOpenInquiry, onOpenLegal }: ContactFooterProps) {
   return (
     <>
       <section className="py-20 lg:py-24">
@@ -56,6 +58,20 @@ export function ContactFooter({ onOpenInquiry }: ContactFooterProps) {
               <a href="#approach" className="hover:text-[#0B2228] transition-colors">
                 Approach
               </a>
+              <button
+                type="button"
+                onClick={() => onOpenLegal('disclosures')}
+                className="hover:text-[#0B2228] transition-colors cursor-pointer"
+              >
+                Disclosures
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenLegal('privacy')}
+                className="hover:text-[#0B2228] transition-colors cursor-pointer"
+              >
+                Privacy
+              </button>
             </nav>
           </div>
 

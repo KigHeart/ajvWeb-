@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
 interface HeaderProps {
@@ -6,20 +6,55 @@ interface HeaderProps {
 }
 
 const NAV_LINKS = [
-  { label: 'What We Do', href: '#what-we-do' },
-  { label: 'Focus', href: '#focus' },
-  { label: 'Approach', href: '#approach' },
+  { id: 'what-we-do', label: 'What We Do', href: '#what-we-do' },
+  { id: 'focus', label: 'Focus', href: '#focus' },
+  { id: 'approach', label: 'Approach', href: '#approach' },
 ];
 
 export function Header({ onOpenInquiry }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string>('');
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight > 0) {
+        setScrollProgress(Math.min(1, Math.max(0, window.scrollY / docHeight)));
+      }
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const sections = NAV_LINKS.map((l) => document.getElementById(l.id)).filter(
+      (el): el is HTMLElement => Boolean(el),
+    );
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: '-35% 0px -50% 0px' },
+    );
+
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <header className="sticky top-3 z-40 px-4 sm:px-6 lg:px-10">
-      <div className="max-w-[1200px] mx-auto glass-light rounded-2xl px-6 h-15 flex items-center justify-between gap-8">
+      <div className="relative max-w-[1200px] mx-auto glass-light rounded-2xl px-6 h-15 flex items-center justify-between gap-8 overflow-hidden">
         <a
           href="#top"
-          className="font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#0B2228] whitespace-nowrap shrink-0"
+          className="font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#0B2228] whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#0B5563]"
         >
           Ajentir Ventures
         </a>
@@ -28,15 +63,22 @@ export function Header({ onOpenInquiry }: HeaderProps) {
           aria-label="Primary"
           className="hidden md:flex items-center gap-10 text-sm font-medium text-[#43585D]"
         >
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="whitespace-nowrap shrink-0 py-1 hover:text-[#0B2228] transition-colors duration-150"
-            >
-              {link.label}
-            </a>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const active = activeId === link.id;
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                className={`whitespace-nowrap shrink-0 py-1 border-b transition-colors duration-150 ${
+                  active
+                    ? 'text-[#0B2228] border-[#B5862A]'
+                    : 'border-transparent hover:text-[#0B2228]'
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-3 shrink-0">
@@ -57,6 +99,17 @@ export function Header({ onOpenInquiry }: HeaderProps) {
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
+        </div>
+
+        {/* Subtle reading progress hairline */}
+        <div
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 right-0 h-[2px] bg-transparent pointer-events-none"
+        >
+          <div
+            className="h-full bg-gradient-to-r from-[#0B5563] to-[#C89B3C] origin-left transition-transform duration-150"
+            style={{ transform: `scaleX(${scrollProgress})` }}
+          />
         </div>
       </div>
 

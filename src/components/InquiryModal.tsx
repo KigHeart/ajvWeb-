@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { X, CheckCircle2 } from 'lucide-react';
 
 interface InquiryModalProps {
@@ -10,10 +10,20 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
   const [role, setRole] = useState<'founder' | 'partner' | 'general'>('founder');
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
+  const [website, setWebsite] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open && !submitted) {
+      const timer = window.setTimeout(() => nameInputRef.current?.focus(), 40);
+      return () => window.clearTimeout(timer);
+    }
+  }, [open, submitted]);
 
   if (!open) return null;
 
@@ -42,6 +52,9 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="inquiry-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) resetAndClose();
+      }}
     >
       <div className="neu-raised rounded-3xl w-full max-w-lg p-7 sm:p-9 relative max-h-[90vh] overflow-y-auto">
         <button
@@ -63,7 +76,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
               Message Received
             </h3>
             <p className="text-sm text-[#43585D] leading-relaxed">
-              Thank you, {fullName}. We have received your note and will be in touch.
+              Thank you, {fullName}. We have received your note and will review it shortly.
             </p>
             <button
               type="button"
@@ -117,6 +130,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
                   Name
                 </label>
                 <input
+                  ref={nameInputRef}
                   id="modal-name"
                   type="text"
                   value={fullName}
@@ -126,44 +140,62 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
                 />
               </div>
 
-              <div>
-                <label htmlFor="modal-company" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                  Company (optional)
-                </label>
-                <input
-                  id="modal-company"
-                  type="text"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  placeholder="Company or organisation"
-                  className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="modal-company" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                    Company (optional)
+                  </label>
+                  <input
+                    id="modal-company"
+                    type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="Company name"
+                    className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="modal-email" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                    Email
+                  </label>
+                  <input
+                    id="modal-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="modal-email" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                  Email
-                </label>
-                <input
-                  id="modal-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
-                />
-              </div>
+              {role === 'founder' && (
+                <div>
+                  <label htmlFor="modal-website" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                    Website or Deck Link (optional)
+                  </label>
+                  <input
+                    id="modal-website"
+                    type="url"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
+              )}
 
               <div>
                 <label htmlFor="modal-message" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                  What are you building?
+                  {role === 'founder' ? 'What are you automating for enterprises or SMEs?' : 'Note'}
                 </label>
                 <textarea
                   id="modal-message"
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="A short note on your product or inquiry..."
+                  placeholder="A brief note on your product or inquiry..."
                   className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563] resize-none"
                 />
               </div>
