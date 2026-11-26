@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface FundISectionProps {
-  onOpenInquiry: () => void;
+  onPartnerInquiry: () => void;
 }
 
 const APPROACH_SLIDES = [
@@ -10,23 +10,23 @@ const APPROACH_SLIDES = [
     id: 'sme-gap',
     kicker: 'Underserved SMEs',
     headline: 'Automating everyday enterprise work.',
-    body: 'Small and mid-sized businesses need autonomous workflows for operations, compliance, and finance—not tools engineered only for large corporations.',
+    body: 'Small and mid-sized businesses need autonomous workflows across finance, compliance, and customer channels—not tools engineered only for large corporations.',
   },
   {
     id: 'incubation-training',
-    kicker: 'Incubation & Readiness',
-    headline: 'Preparing founders and executives.',
-    body: 'From incubating early agentic AI concepts to training SME executives on safe adoption, we help bridge technical capability and real demand.',
+    kicker: 'Governance & Incubation',
+    headline: 'Readiness for executives, demand for builders.',
+    body: 'We equip SME leaders to govern shadow AI safely while pairing incubated builders with early design partners before spinout.',
   },
   {
     id: 'partners',
     kicker: 'Ecosystem Alignment',
-    headline: 'Banks, model providers, and builders.',
-    body: 'We partner with financial institutions, AI model providers, and industry operators so autonomous software reaches production faster.',
+    headline: 'Model providers, banks, and operators.',
+    body: 'We connect frontier AI compute credits and commercial bank sandbox pilots so trusted agentic software reaches production faster.',
   },
 ];
 
-export function FundISection({ onOpenInquiry }: FundISectionProps) {
+export function FundISection({ onPartnerInquiry }: FundISectionProps) {
   const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export function FundISection({ onOpenInquiry }: FundISectionProps) {
 
           <button
             type="button"
-            onClick={onOpenInquiry}
+            onClick={onPartnerInquiry}
             className="self-start sm:self-auto px-6 py-3 text-xs font-semibold text-[#06262D] bg-[#E2C275] hover:bg-[#ECD08D] rounded-xl transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
             Partner With Us

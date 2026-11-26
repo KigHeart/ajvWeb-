@@ -1,30 +1,58 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { X, CheckCircle2 } from 'lucide-react';
+import type {
+  FounderTrack,
+  InquiryLane,
+  InquiryPreset,
+  PartnerType,
+  TrainingFocus,
+} from '../data/memorandum';
 
 interface InquiryModalProps {
   open: boolean;
+  preset?: InquiryPreset | null;
   onClose: () => void;
 }
 
-type InquiryLane = 'founder' | 'training' | 'partner';
-
 const LANE_COPY: Record<InquiryLane, { prompt: string; placeholder: string }> = {
   founder: {
-    prompt: 'Tell us about your idea or startup (Investment or Incubation)',
-    placeholder: 'Share what you are automating for SMEs or enterprises...',
+    prompt: 'What workflow are you automating?',
+    placeholder: 'Briefly describe the SME or enterprise problem, product stage, and team...',
   },
   training: {
-    prompt: 'SME Executive Training details',
-    placeholder: 'Leadership team size, industry focus, and goals for agentic AI training...',
+    prompt: 'Leadership team & priorities',
+    placeholder: 'Share leadership team size, industry, and key AI governance or workflow goals...',
   },
   partner: {
-    prompt: 'Partnership interest (AI Model Provider, Bank, or Enterprise)',
-    placeholder: 'How your organisation would like to collaborate with Ajentir Ventures...',
+    prompt: 'Collaboration scope',
+    placeholder:
+      'Describe how we can work together—compute credits, sandbox pilots, or SME distribution...',
   },
 };
 
-export function InquiryModal({ open, onClose }: InquiryModalProps) {
+const FOUNDER_TRACKS: { id: FounderTrack; label: string }[] = [
+  { id: 'investment', label: 'Venture Investment' },
+  { id: 'incubation', label: 'Idea Incubation' },
+];
+
+const TRAINING_FOCUSES: { id: TrainingFocus; label: string }[] = [
+  { id: 'governance', label: 'Governance & Risk' },
+  { id: 'workflow', label: 'SME Workflows' },
+  { id: 'workshop', label: 'Executive Workshop' },
+];
+
+const PARTNER_TYPES: { id: PartnerType; label: string }[] = [
+  { id: 'model-provider', label: 'AI Model Provider' },
+  { id: 'bank', label: 'Bank / FI' },
+  { id: 'enterprise', label: 'Enterprise Network' },
+];
+
+export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
   const [lane, setLane] = useState<InquiryLane>('founder');
+  const [founderTrack, setFounderTrack] = useState<FounderTrack>('investment');
+  const [trainingFocus, setTrainingFocus] = useState<TrainingFocus>('governance');
+  const [partnerType, setPartnerType] = useState<PartnerType>('bank');
+
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
   const [website, setWebsite] = useState('');
@@ -36,11 +64,19 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open && !submitted) {
+    if (open) {
+      setSubmitted(false);
+      setError('');
+      if (preset) {
+        setLane(preset.lane);
+        if (preset.founderTrack) setFounderTrack(preset.founderTrack);
+        if (preset.trainingFocus) setTrainingFocus(preset.trainingFocus);
+        if (preset.partnerType) setPartnerType(preset.partnerType);
+      }
       const timer = window.setTimeout(() => nameInputRef.current?.focus(), 40);
       return () => window.clearTimeout(timer);
     }
-  }, [open, submitted]);
+  }, [open, preset]);
 
   if (!open) return null;
 
@@ -65,6 +101,31 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
 
   const activeCopy = LANE_COPY[lane];
 
+  const getTrackSummaryLabel = () => {
+    if (lane === 'founder') {
+      const found = FOUNDER_TRACKS.find((t) => t.id === founderTrack);
+      return `Founders · ${found?.label ?? 'Investment'}`;
+    }
+    if (lane === 'training') {
+      const found = TRAINING_FOCUSES.find((t) => t.id === trainingFocus);
+      return `Executive Training · ${found?.label ?? 'Briefing'}`;
+    }
+    const found = PARTNER_TYPES.find((t) => t.id === partnerType);
+    return `Strategic Partnership · ${found?.label ?? 'Partner'}`;
+  };
+
+  const getNextStepCopy = () => {
+    if (lane === 'founder') {
+      return founderTrack === 'incubation'
+        ? 'Our venture team reviews early concepts weekly and will follow up within two business days if there is a strong fit for incubation.'
+        : 'Our investment team reviews every submission directly and replies within two business days regarding next steps.';
+    }
+    if (lane === 'training') {
+      return 'We will share available executive briefing dates and a concise syllabus tailored to your leadership team within two business days.';
+    }
+    return 'Our partnerships lead will respond within two business days to schedule an introductory discussion on sandbox or ecosystem collaboration.';
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#06262D]/55 backdrop-blur-md p-4"
@@ -88,21 +149,24 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
         {submitted ? (
           <div className="py-6 space-y-4">
             <CheckCircle2 className="w-8 h-8 text-[#0B5563]" aria-hidden="true" />
-            <h3
-              id="inquiry-modal-title"
-              className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#0B2228]"
-            >
-              Message Received
-            </h3>
+            <div>
+              <p className="text-xs font-medium text-[#0B5563] mb-1">{getTrackSummaryLabel()}</p>
+              <h3
+                id="inquiry-modal-title"
+                className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#0B2228]"
+              >
+                Inquiry Received
+              </h3>
+            </div>
             <p className="text-sm text-[#43585D] leading-relaxed">
-              Thank you, {fullName}. We have received your inquiry and will respond shortly.
+              Thank you, {fullName}. {getNextStepCopy()}
             </p>
             <button
               type="button"
               onClick={resetAndClose}
               className="mt-2 px-6 py-3 text-xs font-semibold text-white neu-btn-teal rounded-xl cursor-pointer"
             >
-              Close
+              Done
             </button>
           </div>
         ) : (
@@ -118,7 +182,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
             <div
               role="tablist"
               aria-label="Inquiry lane"
-              className="grid grid-cols-3 gap-1.5 p-1.5 neu-pressed rounded-2xl mb-6"
+              className="grid grid-cols-3 gap-1.5 p-1.5 neu-pressed rounded-2xl mb-4"
             >
               {[
                 { id: 'founder', label: 'Founders' },
@@ -144,8 +208,93 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
             </div>
 
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
+              {lane === 'founder' && (
+                <div>
+                  <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">Track</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {FOUNDER_TRACKS.map((opt) => {
+                      const active = founderTrack === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setFounderTrack(opt.id)}
+                          aria-pressed={active}
+                          className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
+                            active
+                              ? 'neu-raised-sm text-[#0B5563] ring-1 ring-[#0B5563]/25'
+                              : 'neu-pressed text-[#43585D] hover:text-[#0B2228]'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {lane === 'training' && (
+                <div>
+                  <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                    Briefing Focus
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {TRAINING_FOCUSES.map((opt) => {
+                      const active = trainingFocus === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setTrainingFocus(opt.id)}
+                          aria-pressed={active}
+                          className={`py-2 px-2 text-[11px] sm:text-xs font-semibold rounded-xl transition-all cursor-pointer truncate ${
+                            active
+                              ? 'neu-raised-sm text-[#0B5563] ring-1 ring-[#0B5563]/25'
+                              : 'neu-pressed text-[#43585D] hover:text-[#0B2228]'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {lane === 'partner' && (
+                <div>
+                  <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                    Partner Type
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {PARTNER_TYPES.map((opt) => {
+                      const active = partnerType === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setPartnerType(opt.id)}
+                          aria-pressed={active}
+                          className={`py-2 px-2 text-[11px] sm:text-xs font-semibold rounded-xl transition-all cursor-pointer truncate ${
+                            active
+                              ? 'neu-raised-sm text-[#0B5563] ring-1 ring-[#0B5563]/25'
+                              : 'neu-pressed text-[#43585D] hover:text-[#0B2228]'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div>
-                <label htmlFor="modal-name" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                <label
+                  htmlFor="modal-name"
+                  className="block text-xs font-semibold text-[#0B2228] mb-1.5"
+                >
                   Name
                 </label>
                 <input
@@ -161,7 +310,10 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="modal-company" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                  <label
+                    htmlFor="modal-company"
+                    className="block text-xs font-semibold text-[#0B2228] mb-1.5"
+                  >
                     Organisation
                   </label>
                   <input
@@ -175,7 +327,10 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
                 </div>
 
                 <div>
-                  <label htmlFor="modal-email" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                  <label
+                    htmlFor="modal-email"
+                    className="block text-xs font-semibold text-[#0B2228] mb-1.5"
+                  >
                     Email
                   </label>
                   <input
@@ -191,8 +346,13 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
 
               {lane === 'founder' && (
                 <div>
-                  <label htmlFor="modal-website" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                    Website or Brief URL (optional)
+                  <label
+                    htmlFor="modal-website"
+                    className="block text-xs font-semibold text-[#0B2228] mb-1.5"
+                  >
+                    {founderTrack === 'incubation'
+                      ? 'Concept Note or LinkedIn URL (optional)'
+                      : 'Website or Brief URL (optional)'}
                   </label>
                   <input
                     id="modal-website"
@@ -206,7 +366,10 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
               )}
 
               <div>
-                <label htmlFor="modal-message" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                <label
+                  htmlFor="modal-message"
+                  className="block text-xs font-semibold text-[#0B2228] mb-1.5"
+                >
                   {activeCopy.prompt}
                 </label>
                 <textarea

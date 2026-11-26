@@ -8,16 +8,25 @@ import { HeroSection } from './components/HeroSection';
 import { InquiryModal } from './components/InquiryModal';
 import { LegalModal, type LegalTab } from './components/LegalModal';
 import { MandateSection } from './components/MandateSection';
-import { FOCUS_AREAS } from './data/memorandum';
+import { ProgramBriefModal } from './components/ProgramBriefModal';
+import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memorandum';
 
 export default function App() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [inquiryPreset, setInquiryPreset] = useState<InquiryPreset | null>(null);
+  const [activeOffering, setActiveOffering] = useState<OfferingItem | null>(null);
   const [legalTab, setLegalTab] = useState<LegalTab | null>(null);
+
+  const openInquiry = (preset: InquiryPreset | null = null) => {
+    setInquiryPreset(preset);
+    setInquiryOpen(true);
+  };
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setInquiryOpen(false);
+        setActiveOffering(null);
         setLegalTab(null);
       }
     };
@@ -42,21 +51,37 @@ export default function App() {
           Skip to content
         </a>
 
-        <Header onOpenInquiry={() => setInquiryOpen(true)} />
+        <Header onOpenInquiry={() => openInquiry(null)} />
 
         <main id="main-content">
-          <HeroSection onOpenInquiry={() => setInquiryOpen(true)} />
-          <ArchitectureSection />
+          <HeroSection onOpenInquiry={() => openInquiry(null)} />
+          <ArchitectureSection onSelectOffering={(offering) => setActiveOffering(offering)} />
           <MandateSection />
-          <FundISection onOpenInquiry={() => setInquiryOpen(true)} />
+          <FundISection
+            onPartnerInquiry={() => openInquiry({ lane: 'partner', partnerType: 'bank' })}
+          />
         </main>
 
         <ContactFooter
-          onOpenInquiry={() => setInquiryOpen(true)}
+          onOpenInquiry={() => openInquiry(null)}
           onOpenLegal={(tab) => setLegalTab(tab)}
         />
 
-        <InquiryModal open={inquiryOpen} onClose={() => setInquiryOpen(false)} />
+        <ProgramBriefModal
+          offering={activeOffering}
+          onClose={() => setActiveOffering(null)}
+          onProceedToInquiry={(offering) => {
+            setActiveOffering(null);
+            openInquiry(offering.preset);
+          }}
+        />
+
+        <InquiryModal
+          open={inquiryOpen}
+          preset={inquiryPreset}
+          onClose={() => setInquiryOpen(false)}
+        />
+
         <LegalModal
           tab={legalTab}
           onChangeTab={(tab) => setLegalTab(tab)}

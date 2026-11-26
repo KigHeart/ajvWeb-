@@ -1,27 +1,11 @@
-const OFFERINGS = [
-  {
-    title: 'Venture Investment',
-    summary:
-      'Backing startups automating finance, operations, and supply workflows for underserved SMEs and enterprises.',
-  },
-  {
-    title: 'Idea Incubation',
-    summary:
-      'Working alongside technical builders to turn promising agentic AI concepts into production-ready companies.',
-  },
-  {
-    title: 'Executive Training',
-    summary:
-      'Focused briefings and practical workshops equipping SME leaders to adopt and govern agentic systems.',
-  },
-  {
-    title: 'Strategic Partnerships',
-    summary:
-      'Collaborating with AI model providers, banks, and enterprise networks to expand real-world deployment.',
-  },
-];
+import { ArrowUpRight } from 'lucide-react';
+import { OFFERINGS, type OfferingItem } from '../data/memorandum';
 
-export function ArchitectureSection() {
+interface ArchitectureSectionProps {
+  onSelectOffering: (offering: OfferingItem) => void;
+}
+
+export function ArchitectureSection({ onSelectOffering }: ArchitectureSectionProps) {
   return (
     <section id="what-we-do" className="py-20 lg:py-28">
       <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
@@ -42,14 +26,29 @@ export function ArchitectureSection() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {OFFERINGS.map((item) => (
-                <div key={item.title} className="neu-raised rounded-3xl p-7 sm:p-8">
-                  <h3 className="font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#0B2228] mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm sm:text-base text-[#43585D] leading-[1.65]">
-                    {item.summary}
-                  </p>
-                </div>
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelectOffering(item)}
+                  className="neu-raised rounded-3xl p-7 sm:p-8 text-left flex flex-col justify-between gap-6 group transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-[#0B5563] cursor-pointer"
+                >
+                  <div>
+                    <h3 className="font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#0B2228] group-hover:text-[#0B5563] transition-colors mb-2">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm sm:text-base text-[#43585D] leading-[1.65]">
+                      {item.summary}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-[#DDE4E6] text-xs font-semibold text-[#0B5563]">
+                    <span>{item.ctaLabel}</span>
+                    <ArrowUpRight
+                      className="w-4 h-4 text-[#B5862A] transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                      aria-hidden="true"
+                    />
+                  </div>
+                </button>
               ))}
             </div>
           </div>
