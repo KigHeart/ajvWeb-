@@ -6,7 +6,7 @@ import { FundISection } from './components/FundISection';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { InquiryModal } from './components/InquiryModal';
-import { LegalModal, type LegalTab } from './components/LegalModal';
+import { LegalModal } from './components/LegalModal';
 import { MandateSection } from './components/MandateSection';
 import { ProgramBriefModal } from './components/ProgramBriefModal';
 import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memorandum';
@@ -15,7 +15,7 @@ export default function App() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryPreset, setInquiryPreset] = useState<InquiryPreset | null>(null);
   const [activeOffering, setActiveOffering] = useState<OfferingItem | null>(null);
-  const [legalTab, setLegalTab] = useState<LegalTab | null>(null);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
   const openInquiry = (preset: InquiryPreset | null = null) => {
     setInquiryPreset(preset);
@@ -27,7 +27,7 @@ export default function App() {
       if (e.key === 'Escape') {
         setInquiryOpen(false);
         setActiveOffering(null);
-        setLegalTab(null);
+        setPrivacyOpen(false);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -64,7 +64,7 @@ export default function App() {
 
         <ContactFooter
           onOpenInquiry={() => openInquiry(null)}
-          onOpenLegal={(tab) => setLegalTab(tab)}
+          onOpenPrivacy={() => setPrivacyOpen(true)}
         />
 
         <ProgramBriefModal
@@ -82,11 +82,7 @@ export default function App() {
           onClose={() => setInquiryOpen(false)}
         />
 
-        <LegalModal
-          tab={legalTab}
-          onChangeTab={(tab) => setLegalTab(tab)}
-          onClose={() => setLegalTab(null)}
-        />
+        <LegalModal open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
       </div>
     </MotionConfig>
   );

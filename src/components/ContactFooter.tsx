@@ -1,13 +1,12 @@
 import { BRAND_META } from '../data/memorandum';
 import { BrandLockup } from './BrandLockup';
-import type { LegalTab } from './LegalModal';
 
 interface ContactFooterProps {
   onOpenInquiry: () => void;
-  onOpenLegal: (tab: LegalTab) => void;
+  onOpenPrivacy: () => void;
 }
 
-export function ContactFooter({ onOpenInquiry, onOpenLegal }: ContactFooterProps) {
+export function ContactFooter({ onOpenInquiry, onOpenPrivacy }: ContactFooterProps) {
   return (
     <>
       <section className="py-20 lg:py-24">
@@ -55,14 +54,7 @@ export function ContactFooter({ onOpenInquiry, onOpenLegal }: ContactFooterProps
               </a>
               <button
                 type="button"
-                onClick={() => onOpenLegal('disclosures')}
-                className="hover:text-[#0B2228] transition-colors cursor-pointer"
-              >
-                Disclosures
-              </button>
-              <button
-                type="button"
-                onClick={() => onOpenLegal('privacy')}
+                onClick={onOpenPrivacy}
                 className="hover:text-[#0B2228] transition-colors cursor-pointer"
               >
                 Privacy
