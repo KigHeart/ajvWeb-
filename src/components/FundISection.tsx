@@ -10,19 +10,19 @@ const APPROACH_SLIDES = [
     id: 'sme-gap',
     kicker: 'Underserved SMEs',
     headline: 'Automating everyday enterprise work.',
-    body: 'Small and mid-sized businesses need autonomous workflows for operations, compliance, and finance—not complex tools built only for Fortune 500 teams.',
+    body: 'Small and mid-sized businesses need autonomous workflows for operations, compliance, and finance—not tools engineered only for large corporations.',
   },
   {
-    id: 'production',
-    kicker: 'Production Grade',
-    headline: 'Reliability over demos.',
-    body: 'We partner with builders focused on dependable execution, clear permissions, and software that enterprises can trust in daily production.',
+    id: 'incubation-training',
+    kicker: 'Incubation & Readiness',
+    headline: 'Preparing founders and executives.',
+    body: 'From incubating early agentic AI concepts to training SME executives on safe adoption, we help bridge technical capability and real demand.',
   },
   {
-    id: 'builders',
-    kicker: 'Long-Term Partners',
-    headline: 'Backing founders early.',
-    body: 'We work closely with technical founders turning agentic AI into lasting, practical software businesses.',
+    id: 'partners',
+    kicker: 'Ecosystem Alignment',
+    headline: 'Banks, model providers, and builders.',
+    body: 'We partner with financial institutions, AI model providers, and industry operators so autonomous software reaches production faster.',
   },
 ];
 
@@ -59,7 +59,7 @@ export function FundISection({ onOpenInquiry }: FundISectionProps) {
             onClick={onOpenInquiry}
             className="self-start sm:self-auto px-6 py-3 text-xs font-semibold text-[#06262D] bg-[#E2C275] hover:bg-[#ECD08D] rounded-xl transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
-            Connect With Us
+            Partner With Us
           </button>
         </div>
 

@@ -18,10 +18,10 @@ export function ContactFooter({ onOpenInquiry, onOpenLegal }: ContactFooterProps
                 className="font-display text-2xl sm:text-4xl font-semibold text-[#0B2228] tracking-[-0.03em] leading-[1.08] mb-3"
                 style={{ textWrap: 'balance' }}
               >
-                Building agentic AI for enterprise or SMEs?
+                Building, training, or partnering in agentic AI?
               </h2>
               <p className="text-sm sm:text-base text-[#43585D]">
-                We would like to hear from you.
+                Reach out regarding investment, incubation, SME executive training, or partnerships.
               </p>
             </div>
 

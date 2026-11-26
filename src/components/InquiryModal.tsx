@@ -6,8 +6,25 @@ interface InquiryModalProps {
   onClose: () => void;
 }
 
+type InquiryLane = 'founder' | 'training' | 'partner';
+
+const LANE_COPY: Record<InquiryLane, { prompt: string; placeholder: string }> = {
+  founder: {
+    prompt: 'Tell us about your idea or startup (Investment or Incubation)',
+    placeholder: 'Share what you are automating for SMEs or enterprises...',
+  },
+  training: {
+    prompt: 'SME Executive Training details',
+    placeholder: 'Leadership team size, industry focus, and goals for agentic AI training...',
+  },
+  partner: {
+    prompt: 'Partnership interest (AI Model Provider, Bank, or Enterprise)',
+    placeholder: 'How your organisation would like to collaborate with Ajentir Ventures...',
+  },
+};
+
 export function InquiryModal({ open, onClose }: InquiryModalProps) {
-  const [role, setRole] = useState<'founder' | 'partner' | 'general'>('founder');
+  const [lane, setLane] = useState<InquiryLane>('founder');
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
   const [website, setWebsite] = useState('');
@@ -46,6 +63,8 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
     onClose();
   };
 
+  const activeCopy = LANE_COPY[lane];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#06262D]/55 backdrop-blur-md p-4"
@@ -76,7 +95,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
               Message Received
             </h3>
             <p className="text-sm text-[#43585D] leading-relaxed">
-              Thank you, {fullName}. We have received your note and will review it shortly.
+              Thank you, {fullName}. We have received your inquiry and will respond shortly.
             </p>
             <button
               type="button"
@@ -98,23 +117,23 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
 
             <div
               role="tablist"
-              aria-label="Contact category"
+              aria-label="Inquiry lane"
               className="grid grid-cols-3 gap-1.5 p-1.5 neu-pressed rounded-2xl mb-6"
             >
               {[
-                { id: 'founder', label: 'Founder' },
-                { id: 'partner', label: 'Partner' },
-                { id: 'general', label: 'General' },
+                { id: 'founder', label: 'Founders' },
+                { id: 'training', label: 'Training' },
+                { id: 'partner', label: 'Partners' },
               ].map((tab) => {
-                const active = role === tab.id;
+                const active = lane === tab.id;
                 return (
                   <button
                     key={tab.id}
                     type="button"
                     role="tab"
                     aria-selected={active}
-                    onClick={() => setRole(tab.id as 'founder' | 'partner' | 'general')}
-                    className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
+                    onClick={() => setLane(tab.id as InquiryLane)}
+                    className={`py-2 px-2 text-xs font-semibold rounded-xl transition-all whitespace-nowrap truncate cursor-pointer ${
                       active ? 'neu-raised-sm text-[#0B2228]' : 'text-[#43585D] hover:text-[#0B2228]'
                     }`}
                   >
@@ -143,14 +162,14 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="modal-company" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                    Company (optional)
+                    Organisation
                   </label>
                   <input
                     id="modal-company"
                     type="text"
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Company name"
+                    placeholder="Company, bank, or SME"
                     className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
                   />
                 </div>
@@ -170,10 +189,10 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
                 </div>
               </div>
 
-              {role === 'founder' && (
+              {lane === 'founder' && (
                 <div>
                   <label htmlFor="modal-website" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                    Website or Deck Link (optional)
+                    Website or Brief URL (optional)
                   </label>
                   <input
                     id="modal-website"
@@ -188,14 +207,14 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
 
               <div>
                 <label htmlFor="modal-message" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                  {role === 'founder' ? 'What are you automating for enterprises or SMEs?' : 'Note'}
+                  {activeCopy.prompt}
                 </label>
                 <textarea
                   id="modal-message"
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="A brief note on your product or inquiry..."
+                  placeholder={activeCopy.placeholder}
                   className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563] resize-none"
                 />
               </div>
@@ -210,7 +229,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
                 type="submit"
                 className="w-full py-3 px-5 text-sm font-semibold text-white neu-btn-teal rounded-xl transition-all cursor-pointer"
               >
-                Send Message
+                Send Inquiry
               </button>
             </form>
           </div>
