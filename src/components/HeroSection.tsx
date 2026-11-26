@@ -1,5 +1,5 @@
-import { motion } from 'motion/react';
 import { INSTITUTION_META } from '../data/memorandum';
+import { HeroCinemaReel } from './HeroCinemaReel';
 import { ResilientImage } from './ResilientImage';
 
 interface HeroSectionProps {
@@ -8,8 +8,7 @@ interface HeroSectionProps {
 
 export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
   return (
-    <section id="top" className="relative pt-12 pb-20 lg:pt-16 lg:pb-24 overflow-hidden">
-      {/* Subtle ambient light pools behind glass surfaces */}
+    <section id="top" className="relative pt-10 pb-20 lg:pt-14 lg:pb-24 overflow-hidden">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -top-24 -right-24 w-[460px] h-[460px] rounded-full bg-[#0B5563]/10 blur-3xl"
@@ -21,29 +20,29 @@ export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
 
       <div className="relative max-w-[1240px] mx-auto px-6 lg:px-10">
         <div className="max-w-4xl">
-          <div className="inline-block neu-raised-sm rounded-2xl px-5 py-3.5 mb-10">
+          <div className="inline-block neu-raised-sm rounded-2xl px-5 py-3 mb-8">
             <ResilientImage
               src={INSTITUTION_META.logoSrc}
               alt="Ajentir Ventures"
-              className="h-12 sm:h-14 w-auto object-contain"
+              className="h-11 sm:h-13 w-auto object-contain"
               fallbackTitle="Ajentir Ventures"
             />
           </div>
 
           <h1
-            className="font-display font-semibold tracking-[-0.035em] text-[#0B2228] leading-[1.01] mb-7"
-            style={{ fontSize: 'clamp(2.65rem, 5.5vw, 4.75rem)', textWrap: 'balance' }}
+            className="font-display font-semibold tracking-[-0.035em] text-[#0B2228] leading-[1.01] mb-6"
+            style={{ fontSize: 'clamp(2.5rem, 5.2vw, 4.5rem)', textWrap: 'balance' }}
           >
             Investing in the autonomous economy.
           </h1>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-14">
-            <p className="text-base sm:text-lg leading-[1.65] text-[#43585D] max-w-[46ch]">
-              Hybrid venture capital and venture creation from Nairobi, backing global agentic
-              systems and autonomous enterprises.
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+            <p className="text-base sm:text-lg leading-[1.65] text-[#43585D] max-w-[48ch]">
+              Hybrid venture capital and venture creation from Nairobi—backing and originating the
+              infrastructure, trust controls, and autonomous enterprises missing in Africa today.
             </p>
 
-            <div className="flex items-center gap-6 shrink-0">
+            <div className="flex items-center gap-5 shrink-0">
               <button
                 type="button"
                 onClick={onOpenInquiry}
@@ -61,27 +60,8 @@ export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Sculpted Neumorphic Frame + Frosted Glass Overlay Plate */}
-        <motion.div
-          initial={{ opacity: 0.92, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="neu-raised p-2.5 sm:p-3.5 rounded-[28px]"
-        >
-          <div className="relative aspect-[16/9] lg:aspect-[21/9] w-full overflow-hidden rounded-[18px] bg-[#E3E9EA]">
-            <ResilientImage
-              src="/src/assets/images/hero_agentic_systems_1795692350262.jpg"
-              alt="Multi-layer autonomous agent orchestration and compute architecture"
-              className="w-full h-full object-cover"
-              fallbackTitle="Agentic Systems"
-            />
-
-            <div className="absolute bottom-4 left-4 right-4 sm:right-auto sm:bottom-6 sm:left-6 glass-light rounded-2xl px-5 py-3.5 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-[#0B2228]">
-              <span className="font-semibold">Fund I · $10M Target</span>
-              <span className="text-[#43585D]">Agentic Systems & Autonomous Economy</span>
-            </div>
-          </div>
-        </motion.div>
+        {/* Multi-scene animated capital-flow & agentic economy reel */}
+        <HeroCinemaReel />
       </div>
     </section>
   );

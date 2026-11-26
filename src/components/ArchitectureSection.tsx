@@ -11,31 +11,45 @@ export function ArchitectureSection() {
 
           <div className="lg:col-span-9 space-y-12">
             <h2
-              className="font-display text-2xl sm:text-3xl lg:text-[2.35rem] font-semibold text-[#0B2228] leading-[1.18] tracking-[-0.025em] max-w-[30ch]"
+              className="font-display text-2xl sm:text-3xl lg:text-[2.35rem] font-semibold text-[#0B2228] leading-[1.18] tracking-[-0.025em] max-w-[32ch]"
               style={{ textWrap: 'balance' }}
             >
-              Some defining autonomous-system businesses are founded independently today. Others
-              must be originated where critical infrastructure does not yet exist.
+              African venture capital has funded consumer apps—leaving the autonomous execution
+              layer unbuilt.
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="neu-raised rounded-3xl p-8">
-                <h3 className="font-display text-xl sm:text-2xl font-semibold tracking-[-0.02em] text-[#0B2228] mb-3">
-                  Venture Investment
+            {/* Clear 3-part narrative: State Today -> What Is Missing -> Where We Come In */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="neu-raised rounded-3xl p-7">
+                <div className="font-mono text-[11px] text-[#43585D] mb-2">01 · Today</div>
+                <h3 className="font-display text-xl font-semibold tracking-[-0.02em] text-[#0B2228] mb-2.5">
+                  Application Focus
                 </h3>
-                <p className="text-sm sm:text-base text-[#43585D] leading-[1.7]">
-                  Direct equity in independent founders with proprietary execution technology,
-                  enterprise distribution, and durable unit economics.
+                <p className="text-sm text-[#43585D] leading-[1.65]">
+                  Capital in Africa clusters around payments, logistics marketplaces, and thin AI
+                  wrappers—while agentic systems are funded almost exclusively abroad.
                 </p>
               </div>
 
-              <div className="neu-raised rounded-3xl p-8">
-                <h3 className="font-display text-xl sm:text-2xl font-semibold tracking-[-0.02em] text-[#0B2228] mb-3">
-                  Venture Creation
+              <div className="neu-raised rounded-3xl p-7">
+                <div className="font-mono text-[11px] text-[#B5862A] mb-2">02 · The Gap</div>
+                <h3 className="font-display text-xl font-semibold tracking-[-0.02em] text-[#0B2228] mb-2.5">
+                  Missing Infrastructure
                 </h3>
-                <p className="text-sm sm:text-base text-[#43585D] leading-[1.7]">
-                  Originating new companies around validated enterprise bottlenecks—financed
-                  separately from LP capital and governed independently.
+                <p className="text-sm text-[#43585D] leading-[1.65]">
+                  Virtually no institutional capital backs Africa-originated agent runtimes,
+                  verifiable financial authority, or autonomous industrial production.
+                </p>
+              </div>
+
+              <div className="neu-raised rounded-3xl p-7">
+                <div className="font-mono text-[11px] text-[#0B5563] mb-2">03 · Ajentir</div>
+                <h3 className="font-display text-xl font-semibold tracking-[-0.02em] text-[#0B2228] mb-2.5">
+                  VC & Venture Creation
+                </h3>
+                <p className="text-sm text-[#43585D] leading-[1.65]">
+                  We invest in independent founders and run a separately financed Venture Studio to
+                  originate missing companies where teams have not yet converged.
                 </p>
               </div>
             </div>
