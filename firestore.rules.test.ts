@@ -1,0 +1,18 @@
+/**
+ * Verification suite specification for the "Dirty Dozen" adversarial payloads
+ * documented in security_spec.md against firestore.rules.
+ */
+export const DIRTY_DOZEN_CASES = [
+  { id: 1, name: 'Unauthenticated list scrape on /inquiries', expected: 'PERMISSION_DENIED' },
+  { id: 2, name: 'Unauthenticated single get on /inquiries/{id}', expected: 'PERMISSION_DENIED' },
+  { id: 3, name: 'Signed-in non-admin read on /inquiries', expected: 'PERMISSION_DENIED' },
+  { id: 4, name: 'Shadow field injection (isApproved: true) on create', expected: 'PERMISSION_DENIED' },
+  { id: 5, name: 'Status shortcutting (status: scheduled) on create', expected: 'PERMISSION_DENIED' },
+  { id: 6, name: 'Client timestamp forgery on create', expected: 'PERMISSION_DENIED' },
+  { id: 7, name: 'Unverified admin email spoof (email_verified: false)', expected: 'PERMISSION_DENIED' },
+  { id: 8, name: 'Self-assigned admin escalation in /admins/{uid}', expected: 'PERMISSION_DENIED' },
+  { id: 9, name: 'Resource poisoning via oversized message (>2000 chars)', expected: 'PERMISSION_DENIED' },
+  { id: 10, name: 'Path ID poisoning on /inquiries/{badId}', expected: 'PERMISSION_DENIED' },
+  { id: 11, name: 'Invalid lane enum or malformed email on create', expected: 'PERMISSION_DENIED' },
+  { id: 12, name: 'Admin update attempting to mutate createdAt or invalid status', expected: 'PERMISSION_DENIED' },
+] as const;

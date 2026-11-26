@@ -4,9 +4,14 @@ import { BrandLockup } from './BrandLockup';
 interface ContactFooterProps {
   onOpenInquiry: () => void;
   onOpenPrivacy: () => void;
+  onOpenPortal: () => void;
 }
 
-export function ContactFooter({ onOpenInquiry, onOpenPrivacy }: ContactFooterProps) {
+export function ContactFooter({
+  onOpenInquiry,
+  onOpenPrivacy,
+  onOpenPortal,
+}: ContactFooterProps) {
   return (
     <>
       <section className="py-20 lg:py-24">
@@ -58,6 +63,13 @@ export function ContactFooter({ onOpenInquiry, onOpenPrivacy }: ContactFooterPro
                 className="hover:text-[#0B2228] transition-colors cursor-pointer"
               >
                 Privacy
+              </button>
+              <button
+                type="button"
+                onClick={onOpenPortal}
+                className="hover:text-[#0B2228] transition-colors cursor-pointer"
+              >
+                Portal
               </button>
             </nav>
           </div>

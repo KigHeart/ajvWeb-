@@ -7,6 +7,8 @@ import type {
   PartnerType,
   TrainingFocus,
 } from '../data/memorandum';
+import { EMAIL_PATTERN, PAYLOAD_LIMITS } from '../lib/firebase';
+import { submitInquiry, type InquirySubTrack } from '../lib/inquiries';
 
 interface InquiryModalProps {
   open: boolean;
@@ -59,7 +61,10 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedName, setSubmittedName] = useState('');
+  const [referenceId, setReferenceId] = useState('');
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,6 +72,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
     if (open) {
       setSubmitted(false);
       setError('');
+      setSubmitting(false);
       if (preset) {
         setLane(preset.lane);
         if (preset.founderTrack) setFounderTrack(preset.founderTrack);
@@ -80,22 +86,56 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
 
   if (!open) return null;
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const getActiveSubTrack = (): InquirySubTrack => {
+    if (lane === 'founder') return founderTrack;
+    if (lane === 'training') return trainingFocus;
+    return partnerType;
+  };
 
-    if (!fullName.trim() || !emailPattern.test(email.trim())) {
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    const trimmedName = fullName.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName || !EMAIL_PATTERN.test(trimmedEmail)) {
       setError('Please enter your name and a valid email address.');
       return;
     }
 
     setError('');
-    setSubmitted(true);
+    setSubmitting(true);
+
+    try {
+      const result = await submitInquiry({
+        lane,
+        subTrack: getActiveSubTrack(),
+        fullName: trimmedName,
+        company,
+        email: trimmedEmail,
+        website,
+        message,
+      });
+
+      setSubmittedName(trimmedName);
+      setReferenceId(result.id.slice(0, 8).toUpperCase());
+      setFullName('');
+      setCompany('');
+      setWebsite('');
+      setEmail('');
+      setMessage('');
+      setSubmitted(true);
+    } catch {
+      setError('We could not save your inquiry right now. Please try again in a moment.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const resetAndClose = () => {
     setSubmitted(false);
     setError('');
+    setSubmitting(false);
     onClose();
   };
 
@@ -133,15 +173,16 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
       aria-modal="true"
       aria-labelledby="inquiry-modal-title"
       onClick={(e) => {
-        if (e.target === e.currentTarget) resetAndClose();
+        if (e.target === e.currentTarget && !submitting) resetAndClose();
       }}
     >
       <div className="neu-raised rounded-3xl w-full max-w-lg p-7 sm:p-9 relative max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={resetAndClose}
+          disabled={submitting}
           aria-label="Close contact modal"
-          className="absolute top-6 right-6 w-10 h-10 neu-raised-sm rounded-xl flex items-center justify-center text-[#43585D] hover:text-[#0B2228] transition-colors cursor-pointer"
+          className="absolute top-6 right-6 w-10 h-10 neu-raised-sm rounded-xl flex items-center justify-center text-[#43585D] hover:text-[#0B2228] transition-colors cursor-pointer disabled:opacity-50"
         >
           <X className="w-4 h-4" />
         </button>
@@ -150,7 +191,10 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
           <div className="py-6 space-y-4">
             <CheckCircle2 className="w-8 h-8 text-[#0B5563]" aria-hidden="true" />
             <div>
-              <p className="text-xs font-medium text-[#0B5563] mb-1">{getTrackSummaryLabel()}</p>
+              <p className="text-xs font-medium text-[#0B5563] mb-1">
+                {getTrackSummaryLabel()}
+                {referenceId ? ` · Ref ${referenceId}` : ''}
+              </p>
               <h3
                 id="inquiry-modal-title"
                 className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#0B2228]"
@@ -159,7 +203,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
               </h3>
             </div>
             <p className="text-sm text-[#43585D] leading-relaxed">
-              Thank you, {fullName}. {getNextStepCopy()}
+              Thank you, {submittedName}. {getNextStepCopy()}
             </p>
             <button
               type="button"
@@ -196,6 +240,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                     type="button"
                     role="tab"
                     aria-selected={active}
+                    disabled={submitting}
                     onClick={() => setLane(tab.id as InquiryLane)}
                     className={`py-2 px-2 text-xs font-semibold rounded-xl transition-all whitespace-nowrap truncate cursor-pointer ${
                       active ? 'neu-raised-sm text-[#0B2228]' : 'text-[#43585D] hover:text-[#0B2228]'
@@ -218,6 +263,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                         <button
                           key={opt.id}
                           type="button"
+                          disabled={submitting}
                           onClick={() => setFounderTrack(opt.id)}
                           aria-pressed={active}
                           className={`py-2 px-3 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
@@ -246,6 +292,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                         <button
                           key={opt.id}
                           type="button"
+                          disabled={submitting}
                           onClick={() => setTrainingFocus(opt.id)}
                           aria-pressed={active}
                           className={`py-2 px-2 text-[11px] sm:text-xs font-semibold rounded-xl transition-all cursor-pointer truncate ${
@@ -274,6 +321,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                         <button
                           key={opt.id}
                           type="button"
+                          disabled={submitting}
                           onClick={() => setPartnerType(opt.id)}
                           aria-pressed={active}
                           className={`py-2 px-2 text-[11px] sm:text-xs font-semibold rounded-xl transition-all cursor-pointer truncate ${
@@ -301,6 +349,8 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                   ref={nameInputRef}
                   id="modal-name"
                   type="text"
+                  maxLength={PAYLOAD_LIMITS.fullNameMax}
+                  disabled={submitting}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Your name"
@@ -319,6 +369,8 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                   <input
                     id="modal-company"
                     type="text"
+                    maxLength={PAYLOAD_LIMITS.companyMax}
+                    disabled={submitting}
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Company, bank, or SME"
@@ -336,6 +388,8 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                   <input
                     id="modal-email"
                     type="email"
+                    maxLength={PAYLOAD_LIMITS.emailMax}
+                    disabled={submitting}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@company.com"
@@ -357,6 +411,8 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                   <input
                     id="modal-website"
                     type="url"
+                    maxLength={PAYLOAD_LIMITS.websiteMax}
+                    disabled={submitting}
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                     placeholder="https://..."
@@ -375,6 +431,8 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
                 <textarea
                   id="modal-message"
                   rows={3}
+                  maxLength={PAYLOAD_LIMITS.messageMax}
+                  disabled={submitting}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder={activeCopy.placeholder}
@@ -390,9 +448,10 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
 
               <button
                 type="submit"
-                className="w-full py-3 px-5 text-sm font-semibold text-white neu-btn-teal rounded-xl transition-all cursor-pointer"
+                disabled={submitting}
+                className="w-full py-3 px-5 text-sm font-semibold text-white neu-btn-teal rounded-xl transition-all cursor-pointer disabled:opacity-60"
               >
-                Send Inquiry
+                {submitting ? 'Sending...' : 'Send Inquiry'}
               </button>
             </form>
           </div>

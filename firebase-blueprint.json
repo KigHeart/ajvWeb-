@@ -1,0 +1,130 @@
+{
+  "entities": {
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "Inbound inquiry submitted through the Ajentir Ventures website across Founders, Training, or Partners lanes.",
+      "type": "object",
+      "properties": {
+        "lane": {
+          "type": "string",
+          "enum": ["founder", "training", "partner"],
+          "description": "Top-level stakeholder lane."
+        },
+        "subTrack": {
+          "type": "string",
+          "enum": [
+            "investment",
+            "incubation",
+            "governance",
+            "workflow",
+            "workshop",
+            "model-provider",
+            "bank",
+            "enterprise"
+          ],
+          "description": "Specific program or partnership sub-track."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Submitter full name."
+        },
+        "company": {
+          "type": "string",
+          "maxLength": 140,
+          "description": "Organisation, startup, SME, or bank name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 160,
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "description": "Contact email address."
+        },
+        "website": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional website, brief, or LinkedIn URL."
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Inquiry summary or collaboration scope."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["new", "reviewing", "scheduled", "archived"],
+          "description": "Internal triage status managed by Ajentir Ventures admins."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Internal review notes written by Ajentir Ventures admins."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-updated timestamp."
+        }
+      },
+      "required": [
+        "lane",
+        "subTrack",
+        "fullName",
+        "company",
+        "email",
+        "website",
+        "message",
+        "status",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized Ajentir Ventures team member permitted to review and triage inquiries.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 160,
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["email", "displayName", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Publicly creatable (schema-validated) inquiry submissions readable and triaged solely by verified admins."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Verified Ajentir Ventures admin roster."
+    }
+  }
+}
