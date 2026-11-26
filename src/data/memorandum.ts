@@ -1,60 +1,44 @@
-export interface FocusVertical {
+export interface FocusArea {
   id: string;
   title: string;
-  allocation: string;
   summary: string;
   image: string;
   imageAlt: string;
 }
 
-export const INSTITUTION_META = {
+export const BRAND_META = {
   name: 'Ajentir Ventures',
-  tagline: 'Investing in the Autonomous Economy',
-  founder: 'Kiprop arap Yego',
-  headquarters: 'Nairobi, Kenya',
   year: '2026',
   logoSrc: '/assets/aistudio/AJENTIR_Ventures_Turquoise_Gold_Logo_c1541649.png',
 };
 
-export const FOCUS_VERTICALS: FocusVertical[] = [
+export const FOCUS_AREAS: FocusArea[] = [
+  {
+    id: 'sme',
+    title: 'SME Automation',
+    summary: 'Autonomous operations, finance, and workflows built for underserved small and mid-sized businesses.',
+    image: '/src/assets/images/vertical_autonomous_robotics_hardware_1795692992197.jpg',
+    imageAlt: 'Automated industrial system in workshop daylight',
+  },
   {
     id: 'infrastructure',
     title: 'Agentic Infrastructure',
-    allocation: '25%',
-    summary: 'Runtime orchestration, memory, distributed execution, and multi-agent observability.',
+    summary: 'Reliable runtime, orchestration, and execution layers designed for real enterprise environments.',
     image: '/src/assets/images/vertical_nairobi_datacenter_1795692578329.jpg',
-    imageAlt: 'Enterprise server racks and structured fiber-optic infrastructure aisle',
+    imageAlt: 'Enterprise server racks and fiber infrastructure',
   },
   {
     id: 'security',
     title: 'Security & Trust',
-    allocation: '20%',
-    summary: 'Cryptographic identity, scoped authority, policy enforcement, and financial controls.',
+    summary: 'Identity, permissions, and verifiable controls so enterprises can safely delegate work to agents.',
     image: '/src/assets/images/vertical_cryptographic_hardware_1795692992377.jpg',
-    imageAlt: 'Enterprise hardware security module and cryptographic authentication keys',
-  },
-  {
-    id: 'enterprise',
-    title: 'Vertical Autonomous Enterprises',
-    allocation: '35%',
-    summary: 'Autonomous financial operations, industrial engineering, logistics, and scientific workflows.',
-    image: '/src/assets/images/vertical_autonomous_robotics_hardware_1795692992197.jpg',
-    imageAlt: 'Articulated industrial robotic arm and autonomous optical inspection rig',
+    imageAlt: 'Enterprise cryptographic security hardware and authentication keys',
   },
   {
     id: 'compute',
-    title: 'Agentic Compute & Data',
-    allocation: '10%',
-    summary: 'Inference optimisation, specialised workload routing, and high-integrity data systems.',
+    title: 'Applied Autonomy',
+    summary: 'High-efficiency compute and execution systems turning intelligence into dependable output.',
     image: '/src/assets/images/hero_agentic_compute_grid_1795692991510.jpg',
-    imageAlt: 'High-density liquid-cooled AI compute cluster and optical conduits',
-  },
-  {
-    id: 'emerging',
-    title: 'Emerging Technologies',
-    allocation: '10%',
-    summary: 'Frontier autonomous primitives maturing alongside enterprise agent capability.',
-    image: '/src/assets/images/hero_agentic_compute_grid_1795692991510.jpg',
-    imageAlt: 'Frontier AI compute and autonomous orchestration infrastructure',
+    imageAlt: 'High-density AI compute clusters and optical fiber conduits',
   },
 ];

@@ -7,9 +7,9 @@ interface InquiryModalProps {
 }
 
 export function InquiryModal({ open, onClose }: InquiryModalProps) {
-  const [inquiryType, setInquiryType] = useState<'lp' | 'founder' | 'partner'>('lp');
+  const [role, setRole] = useState<'founder' | 'partner' | 'general'>('founder');
   const [fullName, setFullName] = useState('');
-  const [organization, setOrganization] = useState('');
+  const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -21,8 +21,8 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
     e.preventDefault();
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!fullName.trim() || !organization.trim() || !emailPattern.test(email.trim())) {
-      setError('Please enter your name, organisation, and a valid email address.');
+    if (!fullName.trim() || !emailPattern.test(email.trim())) {
+      setError('Please enter your name and a valid email address.');
       return;
     }
 
@@ -47,7 +47,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
         <button
           type="button"
           onClick={resetAndClose}
-          aria-label="Close inquiry modal"
+          aria-label="Close contact modal"
           className="absolute top-6 right-6 w-10 h-10 neu-raised-sm rounded-xl flex items-center justify-center text-[#43585D] hover:text-[#0B2228] transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
@@ -56,19 +56,21 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
         {submitted ? (
           <div className="py-6 space-y-4">
             <CheckCircle2 className="w-8 h-8 text-[#0B5563]" aria-hidden="true" />
-            <h3 id="inquiry-modal-title" className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#0B2228]">
-              Inquiry Recorded
+            <h3
+              id="inquiry-modal-title"
+              className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#0B2228]"
+            >
+              Message Received
             </h3>
             <p className="text-sm text-[#43585D] leading-relaxed">
-              Thank you, {fullName}. Your note from {organization} has been logged for review by
-              Ajentir Ventures.
+              Thank you, {fullName}. We have received your note and will be in touch.
             </p>
             <button
               type="button"
               onClick={resetAndClose}
               className="mt-2 px-6 py-3 text-xs font-semibold text-white neu-btn-teal rounded-xl cursor-pointer"
             >
-              Return
+              Close
             </button>
           </div>
         ) : (
@@ -78,27 +80,27 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
               id="inquiry-modal-title"
               className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#0B2228] mb-5"
             >
-              Request LP Brief
+              Get in Touch
             </h3>
 
             <div
               role="tablist"
-              aria-label="Inquiry category"
+              aria-label="Contact category"
               className="grid grid-cols-3 gap-1.5 p-1.5 neu-pressed rounded-2xl mb-6"
             >
               {[
-                { id: 'lp', label: 'Prospective LP' },
                 { id: 'founder', label: 'Founder' },
                 { id: 'partner', label: 'Partner' },
+                { id: 'general', label: 'General' },
               ].map((tab) => {
-                const active = inquiryType === tab.id;
+                const active = role === tab.id;
                 return (
                   <button
                     key={tab.id}
                     type="button"
                     role="tab"
                     aria-selected={active}
-                    onClick={() => setInquiryType(tab.id as 'lp' | 'founder' | 'partner')}
+                    onClick={() => setRole(tab.id as 'founder' | 'partner' | 'general')}
                     className={`py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
                       active ? 'neu-raised-sm text-[#0B2228]' : 'text-[#43585D] hover:text-[#0B2228]'
                     }`}
@@ -112,28 +114,28 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
               <div>
                 <label htmlFor="modal-name" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                  Full Name
+                  Name
                 </label>
                 <input
                   id="modal-name"
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Wanjiku Kamau"
+                  placeholder="Your name"
                   className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
                 />
               </div>
 
               <div>
-                <label htmlFor="modal-org" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                  Organisation
+                <label htmlFor="modal-company" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                  Company (optional)
                 </label>
                 <input
-                  id="modal-org"
+                  id="modal-company"
                   type="text"
-                  value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
-                  placeholder="Rift Valley Family Office"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  placeholder="Company or organisation"
                   className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
                 />
               </div>
@@ -147,21 +149,21 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@institution.org"
+                  placeholder="you@company.com"
                   className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
                 />
               </div>
 
               <div>
                 <label htmlFor="modal-message" className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                  Note
+                  What are you building?
                 </label>
                 <textarea
                   id="modal-message"
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Optional mandate or technical context..."
+                  placeholder="A short note on your product or inquiry..."
                   className="w-full px-4 py-2.5 text-sm neu-pressed rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563] resize-none"
                 />
               </div>
@@ -176,7 +178,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
                 type="submit"
                 className="w-full py-3 px-5 text-sm font-semibold text-white neu-btn-teal rounded-xl transition-all cursor-pointer"
               >
-                Submit Request
+                Send Message
               </button>
             </form>
           </div>

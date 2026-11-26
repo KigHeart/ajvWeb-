@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowUpRight } from 'lucide-react';
-import { FOCUS_VERTICALS } from '../data/memorandum';
+import { FOCUS_AREAS } from '../data/memorandum';
 import { ResilientImage } from './ResilientImage';
 
 export function MandateSection() {
-  const [activeId, setActiveId] = useState(FOCUS_VERTICALS[0].id);
-  const current = FOCUS_VERTICALS.find((v) => v.id === activeId) || FOCUS_VERTICALS[0];
+  const [activeId, setActiveId] = useState(FOCUS_AREAS[0].id);
+  const current = FOCUS_AREAS.find((v) => v.id === activeId) || FOCUS_AREAS[0];
 
   return (
     <section id="focus" className="relative py-20 lg:py-28 overflow-hidden">
@@ -15,31 +15,30 @@ export function MandateSection() {
         className="pointer-events-none absolute top-1/2 left-1/3 w-[520px] h-[520px] -translate-y-1/2 rounded-full bg-[#0B5563]/8 blur-3xl"
       />
 
-      <div className="relative max-w-[1240px] mx-auto px-6 lg:px-10">
+      <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-          {/* Left: Interactive Neumorphic Focus Index */}
           <div className="lg:col-span-7">
             <div className="mb-10">
               <span className="inline-block neu-pressed rounded-xl px-4 py-2 text-xs font-medium text-[#0B5563] mb-4">
-                Investment Focus
+                Focus
               </span>
               <h2
                 className="font-display text-2xl sm:text-4xl font-semibold text-[#0B2228] tracking-[-0.025em]"
                 style={{ textWrap: 'balance' }}
               >
-                Five layers of the autonomous stack.
+                Where we invest.
               </h2>
             </div>
 
             <div className="space-y-3">
-              {FOCUS_VERTICALS.map((vertical) => {
-                const isActive = vertical.id === current.id;
+              {FOCUS_AREAS.map((area) => {
+                const isActive = area.id === current.id;
                 return (
                   <button
-                    key={vertical.id}
+                    key={area.id}
                     type="button"
-                    onMouseEnter={() => setActiveId(vertical.id)}
-                    onClick={() => setActiveId(vertical.id)}
+                    onMouseEnter={() => setActiveId(area.id)}
+                    onClick={() => setActiveId(area.id)}
                     aria-expanded={isActive}
                     className={`w-full text-left px-6 py-5 rounded-2xl transition-all duration-200 group cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0B5563] ${
                       isActive ? 'neu-raised' : 'hover:bg-white/40'
@@ -53,27 +52,22 @@ export function MandateSection() {
                             : 'text-[#0B2228] group-hover:text-[#0B5563]'
                         }`}
                       >
-                        {vertical.title}
+                        {area.title}
                       </span>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="font-mono text-xs text-[#43585D] tabular-nums">
-                          {vertical.allocation}
-                        </span>
-                        <ArrowUpRight
-                          className={`w-4 h-4 transition-transform duration-150 ${
-                            isActive
-                              ? 'text-[#B5862A] translate-x-0.5 -translate-y-0.5'
-                              : 'text-[#8D9DA1] group-hover:text-[#0B2228]'
-                          }`}
-                          aria-hidden="true"
-                        />
-                      </div>
+                      <ArrowUpRight
+                        className={`w-4 h-4 shrink-0 transition-transform duration-150 ${
+                          isActive
+                            ? 'text-[#B5862A] translate-x-0.5 -translate-y-0.5'
+                            : 'text-[#8D9DA1] group-hover:text-[#0B2228]'
+                        }`}
+                        aria-hidden="true"
+                      />
                     </div>
 
                     {isActive && (
-                      <p className="mt-2.5 text-sm sm:text-base text-[#43585D] leading-relaxed max-w-[52ch]">
-                        {vertical.summary}
+                      <p className="mt-2.5 text-sm sm:text-base text-[#43585D] leading-relaxed max-w-[50ch]">
+                        {area.summary}
                       </p>
                     )}
                   </button>
@@ -82,7 +76,6 @@ export function MandateSection() {
             </div>
           </div>
 
-          {/* Right: Neumorphic Visual Stage + Frosted Glass Caption */}
           <div className="lg:col-span-5 lg:sticky lg:top-24">
             <div className="neu-raised p-3 rounded-[28px]">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[16px] bg-[#E3E9EA]">
@@ -105,9 +98,8 @@ export function MandateSection() {
                 </AnimatePresence>
 
                 <div className="absolute bottom-3.5 left-3.5 right-3.5 glass-light rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-[#0B2228]">
-                  <span className="font-display font-medium text-xs sm:text-sm">{current.title}</span>
-                  <span className="font-mono font-medium text-[#0B5563] tabular-nums">
-                    {current.allocation}
+                  <span className="font-display font-medium text-xs sm:text-sm">
+                    {current.title}
                   </span>
                 </div>
               </div>

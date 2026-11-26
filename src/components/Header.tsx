@@ -6,9 +6,9 @@ interface HeaderProps {
 }
 
 const NAV_LINKS = [
-  { label: 'Thesis', href: '#thesis' },
+  { label: 'What We Do', href: '#what-we-do' },
   { label: 'Focus', href: '#focus' },
-  { label: 'Fund I', href: '#fund-i' },
+  { label: 'Approach', href: '#approach' },
 ];
 
 export function Header({ onOpenInquiry }: HeaderProps) {
@@ -16,7 +16,7 @@ export function Header({ onOpenInquiry }: HeaderProps) {
 
   return (
     <header className="sticky top-3 z-40 px-4 sm:px-6 lg:px-10">
-      <div className="max-w-[1240px] mx-auto glass-light rounded-2xl px-6 h-15 flex items-center justify-between gap-8">
+      <div className="max-w-[1200px] mx-auto glass-light rounded-2xl px-6 h-15 flex items-center justify-between gap-8">
         <a
           href="#top"
           className="font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#0B2228] whitespace-nowrap shrink-0"
@@ -61,7 +61,7 @@ export function Header({ onOpenInquiry }: HeaderProps) {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden max-w-[1240px] mx-auto mt-2 glass-light rounded-2xl px-6 py-5 space-y-4">
+        <div className="md:hidden max-w-[1200px] mx-auto mt-2 glass-light rounded-2xl px-6 py-5 space-y-4">
           <nav aria-label="Mobile" className="flex flex-col gap-3">
             {NAV_LINKS.map((link) => (
               <a
