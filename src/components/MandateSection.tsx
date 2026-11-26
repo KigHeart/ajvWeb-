@@ -24,7 +24,7 @@ export function MandateSection() {
                 Investment Focus
               </span>
               <h2
-                className="font-serif text-3xl sm:text-4xl font-medium text-[#0B2228] tracking-tight"
+                className="font-display text-2xl sm:text-4xl font-semibold text-[#0B2228] tracking-[-0.025em]"
                 style={{ textWrap: 'balance' }}
               >
                 Five layers of the autonomous stack.
@@ -47,7 +47,7 @@ export function MandateSection() {
                   >
                     <div className="flex items-baseline justify-between gap-6">
                       <span
-                        className={`font-serif text-2xl sm:text-[1.75rem] font-medium transition-colors duration-150 ${
+                        className={`font-display text-xl sm:text-2xl font-semibold tracking-[-0.02em] transition-colors duration-150 ${
                           isActive
                             ? 'text-[#0B5563]'
                             : 'text-[#0B2228] group-hover:text-[#0B5563]'
@@ -105,7 +105,7 @@ export function MandateSection() {
                 </AnimatePresence>
 
                 <div className="absolute bottom-3.5 left-3.5 right-3.5 glass-light rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-[#0B2228]">
-                  <span className="font-serif italic text-sm">{current.title}</span>
+                  <span className="font-display font-medium text-xs sm:text-sm">{current.title}</span>
                   <span className="font-mono font-medium text-[#0B5563] tabular-nums">
                     {current.allocation}
                   </span>

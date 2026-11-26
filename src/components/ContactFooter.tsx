@@ -13,7 +13,7 @@ export function ContactFooter({ onOpenInquiry }: ContactFooterProps) {
           <div className="neu-raised rounded-[28px] p-8 sm:p-12 lg:p-14 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div className="max-w-2xl">
               <h2
-                className="font-serif text-3xl sm:text-5xl font-medium text-[#0B2228] tracking-tight leading-[1.1] mb-3"
+                className="font-display text-2xl sm:text-4xl lg:text-[2.75rem] font-semibold text-[#0B2228] tracking-[-0.03em] leading-[1.08] mb-3"
                 style={{ textWrap: 'balance' }}
               >
                 An enduring institution at the frontier of autonomous systems.

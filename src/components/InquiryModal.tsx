@@ -56,7 +56,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
         {submitted ? (
           <div className="py-6 space-y-4">
             <CheckCircle2 className="w-8 h-8 text-[#0B5563]" aria-hidden="true" />
-            <h3 id="inquiry-modal-title" className="font-serif text-3xl font-semibold text-[#0B2228]">
+            <h3 id="inquiry-modal-title" className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#0B2228]">
               Inquiry Recorded
             </h3>
             <p className="text-sm text-[#43585D] leading-relaxed">
@@ -76,7 +76,7 @@ export function InquiryModal({ open, onClose }: InquiryModalProps) {
             <p className="text-xs font-medium text-[#0B5563] mb-1.5">Ajentir Ventures</p>
             <h3
               id="inquiry-modal-title"
-              className="font-serif text-3xl font-semibold text-[#0B2228] mb-5"
+              className="font-display text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-[#0B2228] mb-5"
             >
               Request LP Brief
             </h3>

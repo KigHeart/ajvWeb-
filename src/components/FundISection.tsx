@@ -26,8 +26,8 @@ export function FundISection({ onOpenInquiry }: FundISectionProps) {
               Fund I · Target Commitments
             </span>
             <div
-              className="font-serif font-medium text-white tracking-tight leading-none mb-5 tabular-nums"
-              style={{ fontSize: 'clamp(4rem, 7vw, 6.25rem)' }}
+              className="font-display font-semibold text-white tracking-[-0.04em] leading-none mb-5 tabular-nums"
+              style={{ fontSize: 'clamp(3.75rem, 6.5vw, 5.75rem)' }}
             >
               $10M
             </div>

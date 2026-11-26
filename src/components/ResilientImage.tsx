@@ -29,7 +29,7 @@ export function ResilientImage({ src, alt, className = '', fallbackTitle }: Resi
           <ellipse cx="24" cy="24" rx="22" ry="9" transform="rotate(-22 24 24)" stroke="#B5862A" strokeWidth="1.25" />
           <circle cx="32" cy="11" r="2.5" fill="#B5862A" />
         </svg>
-        <span className="font-serif text-lg text-[#0E2024]">{fallbackTitle || 'Ajentir Ventures'}</span>
+        <span className="font-display font-semibold text-base text-[#0E2024]">{fallbackTitle || 'Ajentir Ventures'}</span>
         <span className="mt-1 text-xs text-[#4B5D61] max-w-xs">{alt}</span>
       </div>
     );

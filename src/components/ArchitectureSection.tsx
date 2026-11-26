@@ -11,7 +11,7 @@ export function ArchitectureSection() {
 
           <div className="lg:col-span-9 space-y-12">
             <h2
-              className="font-serif text-3xl sm:text-4xl lg:text-[2.75rem] font-medium text-[#0B2228] leading-[1.2] tracking-tight max-w-[30ch]"
+              className="font-display text-2xl sm:text-3xl lg:text-[2.35rem] font-semibold text-[#0B2228] leading-[1.18] tracking-[-0.025em] max-w-[30ch]"
               style={{ textWrap: 'balance' }}
             >
               Some defining autonomous-system businesses are founded independently today. Others
@@ -20,7 +20,7 @@ export function ArchitectureSection() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="neu-raised rounded-3xl p-8">
-                <h3 className="font-serif text-2xl font-semibold text-[#0B2228] mb-3">
+                <h3 className="font-display text-xl sm:text-2xl font-semibold tracking-[-0.02em] text-[#0B2228] mb-3">
                   Venture Investment
                 </h3>
                 <p className="text-sm sm:text-base text-[#43585D] leading-[1.7]">
@@ -30,7 +30,7 @@ export function ArchitectureSection() {
               </div>
 
               <div className="neu-raised rounded-3xl p-8">
-                <h3 className="font-serif text-2xl font-semibold text-[#0B2228] mb-3">
+                <h3 className="font-display text-xl sm:text-2xl font-semibold tracking-[-0.02em] text-[#0B2228] mb-3">
                   Venture Creation
                 </h3>
                 <p className="text-sm sm:text-base text-[#43585D] leading-[1.7]">

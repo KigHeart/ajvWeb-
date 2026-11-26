@@ -31,8 +31,8 @@ export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
           </div>
 
           <h1
-            className="font-serif font-medium tracking-[-0.02em] text-[#0B2228] leading-[1.03] mb-7"
-            style={{ fontSize: 'clamp(2.75rem, 5.8vw, 5.15rem)', textWrap: 'balance' }}
+            className="font-display font-semibold tracking-[-0.035em] text-[#0B2228] leading-[1.01] mb-7"
+            style={{ fontSize: 'clamp(2.65rem, 5.5vw, 4.75rem)', textWrap: 'balance' }}
           >
             Investing in the autonomous economy.
           </h1>

@@ -19,7 +19,7 @@ export function Header({ onOpenInquiry }: HeaderProps) {
       <div className="max-w-[1240px] mx-auto glass-light rounded-2xl px-6 h-15 flex items-center justify-between gap-8">
         <a
           href="#top"
-          className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-[#0B2228] whitespace-nowrap shrink-0"
+          className="font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#0B2228] whitespace-nowrap shrink-0"
         >
           Ajentir Ventures
         </a>
