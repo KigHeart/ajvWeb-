@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { MotionConfig } from 'motion/react';
 import { ArchitectureSection } from './components/ArchitectureSection';
 import { ContactFooter } from './components/ContactFooter';
 import { FundISection } from './components/FundISection';
@@ -21,16 +22,18 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#0E2024]">
-      <Header onOpenInquiry={() => setInquiryOpen(true)} />
-      <main>
-        <HeroSection onOpenInquiry={() => setInquiryOpen(true)} />
-        <ArchitectureSection />
-        <MandateSection />
-        <FundISection onOpenInquiry={() => setInquiryOpen(true)} />
-      </main>
-      <ContactFooter onOpenInquiry={() => setInquiryOpen(true)} />
-      <InquiryModal open={inquiryOpen} onClose={() => setInquiryOpen(false)} />
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen bg-[#EDF1F2] text-[#0B2228]">
+        <Header onOpenInquiry={() => setInquiryOpen(true)} />
+        <main>
+          <HeroSection onOpenInquiry={() => setInquiryOpen(true)} />
+          <ArchitectureSection />
+          <MandateSection />
+          <FundISection onOpenInquiry={() => setInquiryOpen(true)} />
+        </main>
+        <ContactFooter onOpenInquiry={() => setInquiryOpen(true)} />
+        <InquiryModal open={inquiryOpen} onClose={() => setInquiryOpen(false)} />
+      </div>
+    </MotionConfig>
   );
 }

@@ -4,28 +4,74 @@
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
-
-  --color-ajentir-canvas: #FAF9F6;
-  --color-ajentir-surface: #F2F0EB;
-  --color-ajentir-ink: #0E2024;
-  --color-ajentir-muted: #4B5D61;
-  --color-ajentir-teal: #0B5563;
-  --color-ajentir-teal-deep: #072D35;
-  --color-ajentir-gold: #B5862A;
-  --color-ajentir-gold-soft: #D4AF5A;
-  --color-ajentir-border: #E2DFD7;
 }
 
 @layer base {
   html {
     font-family: var(--font-sans);
-    background-color: #FAF9F6;
-    color: #0E2024;
+    background-color: #EDF1F2;
+    color: #0B2228;
   }
 
   h1, h2, h3, .font-display {
     font-family: var(--font-serif);
   }
+}
+
+/* Soft Neumorphic Elevation & Recessed Wells */
+.neu-raised {
+  background: linear-gradient(145deg, #F3F6F7, #E6ECEE);
+  box-shadow:
+    10px 10px 24px rgba(11, 46, 54, 0.09),
+    -10px -10px 24px rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+}
+
+.neu-raised-sm {
+  background: linear-gradient(145deg, #F4F7F8, #E7EDEF);
+  box-shadow:
+    6px 6px 14px rgba(11, 46, 54, 0.08),
+    -6px -6px 14px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+.neu-pressed {
+  background: #E7EDEE;
+  box-shadow:
+    inset 5px 5px 11px rgba(11, 46, 54, 0.09),
+    inset -5px -5px 11px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.neu-btn-teal {
+  background: linear-gradient(145deg, #0E6272, #084550);
+  box-shadow:
+    6px 6px 16px rgba(8, 45, 53, 0.24),
+    -4px -4px 12px rgba(255, 255, 255, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.neu-btn-teal:hover {
+  background: linear-gradient(145deg, #0F6D7E, #094D59);
+}
+
+/* Frosted Glassmorphic Surfaces */
+.glass-light {
+  background: rgba(255, 255, 255, 0.64);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow: 0 12px 32px rgba(11, 46, 54, 0.07);
+}
+
+.glass-dark {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 18px 40px rgba(3, 18, 22, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .tabular-nums {

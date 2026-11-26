@@ -1,5 +1,3 @@
-import { FUND_ALLOCATION } from '../data/memorandum';
-
 interface FundISectionProps {
   onOpenInquiry: () => void;
 }
@@ -8,77 +6,58 @@ export function FundISection({ onOpenInquiry }: FundISectionProps) {
   return (
     <section
       id="fund-i"
-      className="py-20 lg:py-28 bg-[#072D35] text-[#F5F4F0] border-b border-[#0E4652]"
+      className="relative py-24 lg:py-32 bg-[#06262D] text-[#F5F7F7] overflow-hidden"
     >
-      <div className="max-w-[1160px] mx-auto px-6 space-y-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* Left: Capital Architecture */}
-          <div className="lg:col-span-6 space-y-8">
-            <div>
-              <p className="text-xs font-medium tracking-wider text-[#D4AF5A] mb-2">
-                03. Fund I · Capital Architecture
-              </p>
-              <h2
-                className="font-serif text-3xl sm:text-5xl font-semibold text-white tracking-tight mb-4"
-                style={{ textWrap: 'balance' }}
-              >
-                $10,000,000 target commitments.
-              </h2>
-              <p className="text-sm sm:text-base text-[#D6E0E2] leading-relaxed">
-                Structured for concentrated conviction across 12–15 companies, with disciplined
-                reserves held strictly for demonstrated commercial performance.
-              </p>
-            </div>
+      {/* Ambient lighting behind dark glassmorphic panels */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-28 -left-24 w-[480px] h-[480px] rounded-full bg-[#137B8E]/25 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-24 -right-24 w-[420px] h-[420px] rounded-full bg-[#C89B3C]/15 blur-3xl"
+      />
 
-            <div className="space-y-5 pt-2">
-              {FUND_ALLOCATION.map((row) => (
-                <div key={row.label} className="space-y-2">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <div>
-                      <span className="text-sm font-semibold text-white">{row.label}</span>
-                      <span className="block text-xs text-[#B7C9CD]">{row.detail}</span>
-                    </div>
-                    <span className="font-mono text-base font-medium text-[#D4AF5A] tabular-nums shrink-0">
-                      {row.amount}
-                    </span>
-                  </div>
-                  <div className="h-1 w-full bg-white/15">
-                    <div className="h-full bg-[#D4AF5A]" style={{ width: `${row.share}%` }} />
-                  </div>
-                </div>
-              ))}
+      <div className="relative max-w-[1240px] mx-auto px-6 lg:px-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          {/* Left: Monumental figure inside frosted dark glass */}
+          <div className="lg:col-span-5 glass-dark rounded-3xl p-8 sm:p-10">
+            <span className="text-xs font-medium text-[#E2C275] block mb-4">
+              Fund I · Target Commitments
+            </span>
+            <div
+              className="font-serif font-medium text-white tracking-tight leading-none mb-5 tabular-nums"
+              style={{ fontSize: 'clamp(4rem, 7vw, 6.25rem)' }}
+            >
+              $10M
             </div>
+            <p className="text-sm sm:text-base text-[#C6D5D8] leading-relaxed">
+              Concentrated early-stage capital, disciplined reserves, and independent governance.
+            </p>
           </div>
 
-          {/* Right: Quiet Institutional Governance */}
-          <div
-            id="governance"
-            className="lg:col-span-6 bg-[#0B3943] border border-white/15 p-8 lg:p-10 space-y-6"
-          >
-            <div>
-              <p className="text-xs font-medium tracking-wider text-[#D4AF5A] mb-2">
-                04. Governance & Fiduciary Discipline
-              </p>
-              <h3 className="font-serif text-2xl sm:text-3xl font-semibold text-white mb-3">
-                Independent oversight and LP alignment.
-              </h3>
-              <p className="text-sm text-[#D6E0E2] leading-relaxed">
-                The venture studio operates on separate capital from Fund I. Every studio-originated
-                company faces a strict 25% allocation cap, formal conflict recusal, independent
-                valuation scrutiny, and Investment Committee approval.
-              </p>
+          {/* Right: Frosted dark-glass rows */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="glass-dark rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-12 gap-3 items-baseline">
+              <div className="sm:col-span-4 text-xs font-medium text-[#E2C275]">Portfolio</div>
+              <div className="sm:col-span-8 text-sm sm:text-base text-white leading-relaxed">
+                12–15 companies across external founders ($4.125m) and studio ventures ($1.375m
+                cap).
+              </div>
             </div>
 
-            <div className="pt-5 border-t border-white/15 grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-[#C6D5D8] leading-relaxed">
-              <div>
-                <div className="font-semibold text-white mb-1">Nairobi Headquarters</div>
-                Origination anchored in Kenya and East Africa with global investment and syndication
-                reach.
+            <div className="glass-dark rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-12 gap-3 items-baseline">
+              <div className="sm:col-span-4 text-xs font-medium text-[#E2C275]">Capital</div>
+              <div className="sm:col-span-8 text-sm sm:text-base text-white leading-relaxed">
+                $5.5m initial deployment, $3.5m performance-gated reserves, and $1.0m operations.
               </div>
-              <div>
-                <div className="font-semibold text-white mb-1">Regulatory Readiness</div>
-                Structured in compliance with Capital Markets Authority and applicable fund
-                frameworks prior to commitments.
+            </div>
+
+            <div className="glass-dark rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-12 gap-3 items-baseline">
+              <div className="sm:col-span-4 text-xs font-medium text-[#E2C275]">Governance</div>
+              <div className="sm:col-span-8 text-sm sm:text-base text-white leading-relaxed">
+                Separate studio financing, independent Investment Committee, and Nairobi-to-global
+                mandate.
               </div>
             </div>
 
@@ -86,7 +65,7 @@ export function FundISection({ onOpenInquiry }: FundISectionProps) {
               <button
                 type="button"
                 onClick={onOpenInquiry}
-                className="px-6 py-3 text-xs font-semibold text-[#072D35] bg-[#D4AF5A] hover:bg-[#E2C275] rounded transition-colors cursor-pointer"
+                className="px-6 py-3.5 text-xs font-semibold text-[#06262D] bg-[#E2C275] hover:bg-[#ECD08D] rounded-xl shadow-[0_8px_24px_rgba(226,194,117,0.22)] transition-all duration-150 cursor-pointer"
               >
                 Request LP Memorandum
               </button>

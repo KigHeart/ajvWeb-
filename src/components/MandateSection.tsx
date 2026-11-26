@@ -1,123 +1,117 @@
-import { INVESTMENT_VERTICALS, TECHNICAL_PILLARS } from '../data/memorandum';
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ArrowUpRight } from 'lucide-react';
+import { FOCUS_VERTICALS } from '../data/memorandum';
 import { ResilientImage } from './ResilientImage';
 
 export function MandateSection() {
-  const featured = INVESTMENT_VERTICALS.slice(0, 3);
-  const secondary = INVESTMENT_VERTICALS.slice(3);
+  const [activeId, setActiveId] = useState(FOCUS_VERTICALS[0].id);
+  const current = FOCUS_VERTICALS.find((v) => v.id === activeId) || FOCUS_VERTICALS[0];
 
   return (
-    <section id="focus" className="py-20 lg:py-28 border-b border-[#E2DFD7] bg-white">
-      <div className="max-w-[1160px] mx-auto px-6 space-y-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+    <section id="focus" className="relative py-20 lg:py-28 overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-1/2 left-1/3 w-[520px] h-[520px] -translate-y-1/2 rounded-full bg-[#0B5563]/8 blur-3xl"
+      />
+
+      <div className="relative max-w-[1240px] mx-auto px-6 lg:px-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          {/* Left: Interactive Neumorphic Focus Index */}
           <div className="lg:col-span-7">
-            <p className="text-xs font-medium tracking-wider text-[#0B5563] mb-2">
-              02. Strategic Investment Focus
-            </p>
-            <h2
-              className="font-serif text-3xl sm:text-4xl font-semibold text-[#0E2024] tracking-tight"
-              style={{ textWrap: 'balance' }}
-            >
-              Five verticals across the autonomous economy.
-            </h2>
-          </div>
-          <div className="lg:col-span-5">
-            <p className="text-sm text-[#4B5D61] leading-relaxed">
-              Target Fund I portfolio exposure across core infrastructure, verifiable security, and
-              autonomous enterprise production.
-            </p>
-          </div>
-        </div>
+            <div className="mb-10">
+              <span className="inline-block neu-pressed rounded-xl px-4 py-2 text-xs font-medium text-[#0B5563] mb-4">
+                Investment Focus
+              </span>
+              <h2
+                className="font-serif text-3xl sm:text-4xl font-medium text-[#0B2228] tracking-tight"
+                style={{ textWrap: 'balance' }}
+              >
+                Five layers of the autonomous stack.
+              </h2>
+            </div>
 
-        {/* Featured 3 verticals */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {featured.map((vertical) => (
-            <article
-              key={vertical.roman}
-              className="border border-[#E2DFD7] bg-[#FAF9F6] flex flex-col justify-between"
-            >
-              <div>
-                {vertical.image && (
-                  <div className="aspect-[4/3] overflow-hidden border-b border-[#E2DFD7] bg-[#EAE7DF]">
+            <div className="space-y-3">
+              {FOCUS_VERTICALS.map((vertical) => {
+                const isActive = vertical.id === current.id;
+                return (
+                  <button
+                    key={vertical.id}
+                    type="button"
+                    onMouseEnter={() => setActiveId(vertical.id)}
+                    onClick={() => setActiveId(vertical.id)}
+                    aria-expanded={isActive}
+                    className={`w-full text-left px-6 py-5 rounded-2xl transition-all duration-200 group cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0B5563] ${
+                      isActive ? 'neu-raised' : 'hover:bg-white/40'
+                    }`}
+                  >
+                    <div className="flex items-baseline justify-between gap-6">
+                      <span
+                        className={`font-serif text-2xl sm:text-[1.75rem] font-medium transition-colors duration-150 ${
+                          isActive
+                            ? 'text-[#0B5563]'
+                            : 'text-[#0B2228] group-hover:text-[#0B5563]'
+                        }`}
+                      >
+                        {vertical.title}
+                      </span>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="font-mono text-xs text-[#43585D] tabular-nums">
+                          {vertical.allocation}
+                        </span>
+                        <ArrowUpRight
+                          className={`w-4 h-4 transition-transform duration-150 ${
+                            isActive
+                              ? 'text-[#B5862A] translate-x-0.5 -translate-y-0.5'
+                              : 'text-[#8D9DA1] group-hover:text-[#0B2228]'
+                          }`}
+                          aria-hidden="true"
+                        />
+                      </div>
+                    </div>
+
+                    {isActive && (
+                      <p className="mt-2.5 text-sm sm:text-base text-[#43585D] leading-relaxed max-w-[52ch]">
+                        {vertical.summary}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right: Neumorphic Visual Stage + Frosted Glass Caption */}
+          <div className="lg:col-span-5 lg:sticky lg:top-24">
+            <div className="neu-raised p-3 rounded-[28px]">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[16px] bg-[#E3E9EA]">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={current.id}
+                    initial={{ opacity: 0.45 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0.45 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    className="w-full h-full"
+                  >
                     <ResilientImage
-                      src={vertical.image}
-                      alt={vertical.imageAlt || vertical.title}
+                      src={current.image}
+                      alt={current.imageAlt}
                       className="w-full h-full object-cover"
-                      fallbackTitle={vertical.title}
+                      fallbackTitle={current.title}
                     />
-                  </div>
-                )}
-                <div className="p-6">
-                  <div className="flex items-center justify-between text-xs font-mono text-[#4B5D61] mb-3">
-                    <span>{vertical.roman}</span>
-                    <span className="text-[#0B5563] tabular-nums">
-                      {vertical.sharePercent}% · {vertical.allocation}
-                    </span>
-                  </div>
-                  <h3 className="font-serif text-2xl font-semibold text-[#0E2024] mb-2.5">
-                    {vertical.title}
-                  </h3>
-                  <p className="text-sm text-[#35484C] leading-relaxed">{vertical.description}</p>
-                </div>
-              </div>
-              <div className="px-6 pb-6">
-                <div className="h-0.5 w-full bg-[#E2DFD7]">
-                  <div
-                    className="h-full bg-[#0B5563]"
-                    style={{ width: `${vertical.sharePercent}%` }}
-                  />
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                  </motion.div>
+                </AnimatePresence>
 
-        {/* Secondary 2 verticals */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {secondary.map((vertical) => (
-            <article
-              key={vertical.roman}
-              className="border border-[#E2DFD7] bg-[#FAF9F6] p-6 sm:p-7 flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between text-xs font-mono text-[#4B5D61] mb-2.5">
-                  <span>{vertical.roman}</span>
-                  <span className="text-[#0B5563] tabular-nums">
-                    {vertical.sharePercent}% · {vertical.allocation}
+                <div className="absolute bottom-3.5 left-3.5 right-3.5 glass-light rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-[#0B2228]">
+                  <span className="font-serif italic text-sm">{current.title}</span>
+                  <span className="font-mono font-medium text-[#0B5563] tabular-nums">
+                    {current.allocation}
                   </span>
                 </div>
-                <h3 className="font-serif text-2xl font-semibold text-[#0E2024] mb-2">
-                  {vertical.title}
-                </h3>
-                <p className="text-sm text-[#35484C] leading-relaxed mb-5">{vertical.description}</p>
               </div>
-              <div className="h-0.5 w-full bg-[#E2DFD7]">
-                <div
-                  className="h-full bg-[#B5862A]"
-                  style={{ width: `${vertical.sharePercent}%` }}
-                />
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {/* Quiet Underwriting Standard Strip */}
-        <div className="pt-10 border-t border-[#E2DFD7] grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-5">
-            <h3 className="font-serif text-2xl font-semibold text-[#0E2024] mb-2">
-              The Ajentir Technical Standard
-            </h3>
-            <p className="text-sm text-[#4B5D61] leading-relaxed">
-              Every investment is evaluated on representative production workloads and unit
-              economics rather than synthetic benchmarks.
-            </p>
-          </div>
-          <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 text-sm text-[#0E2024]">
-            {TECHNICAL_PILLARS.map((pillar, i) => (
-              <div key={pillar} className="py-2 border-b border-[#E2DFD7] flex items-baseline gap-2.5">
-                <span className="font-mono text-xs text-[#B5862A] tabular-nums">0{i + 1}</span>
-                <span className="font-medium">{pillar}</span>
-              </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>

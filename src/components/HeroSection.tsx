@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react';
+import { motion } from 'motion/react';
 import { INSTITUTION_META } from '../data/memorandum';
 import { ResilientImage } from './ResilientImage';
 
@@ -8,96 +8,80 @@ interface HeroSectionProps {
 
 export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
   return (
-    <section id="top" className="pt-12 pb-16 lg:pt-16 lg:pb-24 border-b border-[#E2DFD7]">
-      <div className="max-w-[1160px] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-stretch">
-          <div className="lg:col-span-6 flex flex-col justify-between py-2">
-            <div>
-              <div className="mb-10">
-                <ResilientImage
-                  src={INSTITUTION_META.logoSrc}
-                  alt="Ajentir Ventures — Investing in the Autonomous Economy"
-                  className="h-14 sm:h-16 w-auto object-contain"
-                  fallbackTitle="Ajentir Ventures"
-                />
-              </div>
+    <section id="top" className="relative pt-12 pb-20 lg:pt-16 lg:pb-24 overflow-hidden">
+      {/* Subtle ambient light pools behind glass surfaces */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 -right-24 w-[460px] h-[460px] rounded-full bg-[#0B5563]/10 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-40 -left-24 w-[380px] h-[380px] rounded-full bg-[#C89B3C]/12 blur-3xl"
+      />
 
-              <p className="text-xs font-medium tracking-wider text-[#4B5D61] mb-4">
-                Fund I · $10M Target · Nairobi & Global
-              </p>
+      <div className="relative max-w-[1240px] mx-auto px-6 lg:px-10">
+        <div className="max-w-4xl">
+          <div className="inline-block neu-raised-sm rounded-2xl px-5 py-3.5 mb-10">
+            <ResilientImage
+              src={INSTITUTION_META.logoSrc}
+              alt="Ajentir Ventures"
+              className="h-12 sm:h-14 w-auto object-contain"
+              fallbackTitle="Ajentir Ventures"
+            />
+          </div>
 
-              <h1
-                className="font-serif font-semibold tracking-tight text-[#0E2024] leading-[1.06] mb-6"
-                style={{ fontSize: 'clamp(2.5rem, 4.2vw, 3.85rem)', textWrap: 'balance' }}
-              >
-                Investing in the Autonomous Economy.
-              </h1>
+          <h1
+            className="font-serif font-medium tracking-[-0.02em] text-[#0B2228] leading-[1.03] mb-7"
+            style={{ fontSize: 'clamp(2.75rem, 5.8vw, 5.15rem)', textWrap: 'balance' }}
+          >
+            Investing in the autonomous economy.
+          </h1>
 
-              <p className="text-base sm:text-[17px] leading-[1.75] text-[#35484C] max-w-[54ch] mb-10">
-                Ajentir Ventures is a hybrid venture capital and venture creation institution. We
-                back independent founders and originate specialist companies turning autonomous
-                intelligence into reliable economic production.
-              </p>
-            </div>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-14">
+            <p className="text-base sm:text-lg leading-[1.65] text-[#43585D] max-w-[46ch]">
+              Hybrid venture capital and venture creation from Nairobi, backing global agentic
+              systems and autonomous enterprises.
+            </p>
 
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-6 shrink-0">
               <button
                 type="button"
                 onClick={onOpenInquiry}
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 text-sm font-semibold text-white bg-[#0B5563] hover:bg-[#073D47] rounded transition-colors duration-150 whitespace-nowrap shrink-0 cursor-pointer"
+                className="px-6 py-3.5 text-xs font-semibold tracking-wide text-white neu-btn-teal rounded-xl transition-all duration-150 whitespace-nowrap cursor-pointer"
               >
-                <span>Request LP Brief</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                Request LP Brief
               </button>
-
               <a
-                href="#focus"
-                className="text-sm font-medium text-[#0E2024] border-b border-[#B5862A] pb-0.5 hover:text-[#0B5563] transition-colors duration-150 whitespace-nowrap shrink-0"
+                href="#thesis"
+                className="px-5 py-3 text-xs font-semibold text-[#0B2228] neu-raised-sm rounded-xl hover:text-[#0B5563] transition-colors whitespace-nowrap"
               >
-                Investment Focus
+                Read Thesis
               </a>
             </div>
           </div>
-
-          <div className="lg:col-span-6 flex flex-col">
-            <div className="relative flex-1 min-h-[300px] lg:min-h-[440px] overflow-hidden border border-[#E2DFD7] bg-[#F2F0EB]">
-              <ResilientImage
-                src="/src/assets/images/hero_nairobi_institution_1795689827287.jpg"
-                alt="Architectural atrium representing Ajentir Ventures institutional headquarters in Nairobi"
-                className="w-full h-full lg:absolute lg:inset-0 object-cover"
-                fallbackTitle="Nairobi Institutional Base"
-              />
-            </div>
-          </div>
         </div>
 
-        {/* Quiet 4-column summary strip */}
-        <div className="mt-14 pt-8 border-t border-[#E2DFD7] grid grid-cols-2 lg:grid-cols-4 gap-8">
-          <div>
-            <div className="text-xs text-[#4B5D61] mb-1">Model</div>
-            <div className="font-serif text-lg sm:text-xl font-semibold text-[#0E2024]">
-              Hybrid VC & Studio
+        {/* Sculpted Neumorphic Frame + Frosted Glass Overlay Plate */}
+        <motion.div
+          initial={{ opacity: 0.92, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="neu-raised p-2.5 sm:p-3.5 rounded-[28px]"
+        >
+          <div className="relative aspect-[16/9] lg:aspect-[21/9] w-full overflow-hidden rounded-[18px] bg-[#E3E9EA]">
+            <ResilientImage
+              src="/src/assets/images/hero_agentic_systems_1795692350262.jpg"
+              alt="Multi-layer autonomous agent orchestration and compute architecture"
+              className="w-full h-full object-cover"
+              fallbackTitle="Agentic Systems"
+            />
+
+            <div className="absolute bottom-4 left-4 right-4 sm:right-auto sm:bottom-6 sm:left-6 glass-light rounded-2xl px-5 py-3.5 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-[#0B2228]">
+              <span className="font-semibold">Fund I · $10M Target</span>
+              <span className="text-[#43585D]">Agentic Systems & Autonomous Economy</span>
             </div>
           </div>
-          <div>
-            <div className="text-xs text-[#4B5D61] mb-1">Fund I Target</div>
-            <div className="font-mono text-lg sm:text-xl font-medium text-[#0B5563] tabular-nums">
-              $10,000,000
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-[#4B5D61] mb-1">Portfolio Construction</div>
-            <div className="font-mono text-lg sm:text-xl font-medium text-[#0E2024] tabular-nums">
-              12–15 Companies
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-[#4B5D61] mb-1">Institutional Base</div>
-            <div className="font-serif text-lg sm:text-xl font-semibold text-[#0E2024]">
-              Nairobi · Global Reach
-            </div>
-          </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
