@@ -1,9 +1,27 @@
 import { initializeApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
+
+const recaptchaSiteKey = (
+  import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
+  firebaseConfig.recaptchaSiteKey ||
+  ''
+).trim();
+
+if (recaptchaSiteKey && typeof window !== 'undefined') {
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch {
+    // Non-fatal if App Check is not yet enabled on the Firebase project
+  }
+}
 
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
@@ -12,13 +30,22 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export const ADMIN_OWNER_EMAIL = 'dejawoot99@gmail.com';
 
+export function isOwnerEmail(email: string | null | undefined): boolean {
+  return Boolean(email && email.toLowerCase() === ADMIN_OWNER_EMAIL.toLowerCase());
+}
+
 export const PAYLOAD_LIMITS = {
   fullNameMax: 120,
   companyMax: 140,
   emailMax: 160,
   websiteMax: 300,
+  teamSizeMax: 40,
   messageMax: 2000,
+  stageTagMax: 40,
+  designPartnerMax: 140,
   notesMax: 2000,
+  nextBriefingMax: 120,
+  partnerSandboxMax: 160,
 } as const;
 
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

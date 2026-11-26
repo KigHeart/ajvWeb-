@@ -8,7 +8,7 @@ import type {
   TrainingFocus,
 } from '../data/memorandum';
 import { EMAIL_PATTERN, PAYLOAD_LIMITS } from '../lib/firebase';
-import { submitInquiry, type InquirySubTrack } from '../lib/inquiries';
+import { submitInquiry, type InquirySubTrack, type TeamSizeOption } from '../lib/inquiries';
 
 interface InquiryModalProps {
   open: boolean;
@@ -22,8 +22,8 @@ const LANE_COPY: Record<InquiryLane, { prompt: string; placeholder: string }> = 
     placeholder: 'Briefly describe the SME or enterprise problem, product stage, and team...',
   },
   training: {
-    prompt: 'Leadership team & priorities',
-    placeholder: 'Share leadership team size, industry, and key AI governance or workflow goals...',
+    prompt: 'Leadership priorities',
+    placeholder: 'Share industry focus and key AI governance or SME workflow goals...',
   },
   partner: {
     prompt: 'Collaboration scope',
@@ -43,6 +43,12 @@ const TRAINING_FOCUSES: { id: TrainingFocus; label: string }[] = [
   { id: 'workshop', label: 'Executive Workshop' },
 ];
 
+const TEAM_SIZE_OPTIONS: { id: Exclude<TeamSizeOption, ''>; label: string }[] = [
+  { id: '1-10 leaders', label: '1–10 leaders' },
+  { id: '11-30 leaders', label: '11–30 leaders' },
+  { id: '30+ leaders', label: '30+ leaders' },
+];
+
 const PARTNER_TYPES: { id: PartnerType; label: string }[] = [
   { id: 'model-provider', label: 'AI Model Provider' },
   { id: 'bank', label: 'Bank / FI' },
@@ -53,6 +59,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
   const [lane, setLane] = useState<InquiryLane>('founder');
   const [founderTrack, setFounderTrack] = useState<FounderTrack>('investment');
   const [trainingFocus, setTrainingFocus] = useState<TrainingFocus>('governance');
+  const [teamSize, setTeamSize] = useState<TeamSizeOption>('1-10 leaders');
   const [partnerType, setPartnerType] = useState<PartnerType>('bank');
 
   const [fullName, setFullName] = useState('');
@@ -60,6 +67,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
   const [website, setWebsite] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [honeypot, setHoneypot] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -67,12 +75,15 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
   const [referenceId, setReferenceId] = useState('');
 
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const openedAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
     if (open) {
+      openedAtRef.current = Date.now();
       setSubmitted(false);
       setError('');
       setSubmitting(false);
+      setHoneypot('');
       if (preset) {
         setLane(preset.lane);
         if (preset.founderTrack) setFounderTrack(preset.founderTrack);
@@ -103,6 +114,14 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
       return;
     }
 
+    // Silent bot mitigation (honeypot or instant programmatic submission)
+    if (honeypot.trim() !== '' || Date.now() - openedAtRef.current < 800) {
+      setSubmittedName(trimmedName);
+      setReferenceId('');
+      setSubmitted(true);
+      return;
+    }
+
     setError('');
     setSubmitting(true);
 
@@ -114,6 +133,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
         company,
         email: trimmedEmail,
         website,
+        teamSize: lane === 'training' ? teamSize : '',
         message,
       });
 
@@ -253,6 +273,19 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
             </div>
 
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
+              {/* Honeypot anti-bot field */}
+              <div className="sr-only" aria-hidden="true">
+                <label htmlFor="modal-fax-confirm">Leave this field blank</label>
+                <input
+                  id="modal-fax-confirm"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+              </div>
+
               {lane === 'founder' && (
                 <div>
                   <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">Track</span>
@@ -281,32 +314,61 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
               )}
 
               {lane === 'training' && (
-                <div>
-                  <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                    Briefing Focus
-                  </span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {TRAINING_FOCUSES.map((opt) => {
-                      const active = trainingFocus === opt.id;
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          disabled={submitting}
-                          onClick={() => setTrainingFocus(opt.id)}
-                          aria-pressed={active}
-                          className={`py-2 px-2 text-[11px] sm:text-xs font-semibold rounded-xl transition-all cursor-pointer truncate ${
-                            active
-                              ? 'neu-raised-sm text-[#0B5563] ring-1 ring-[#0B5563]/25'
-                              : 'neu-pressed text-[#43585D] hover:text-[#0B2228]'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
+                <>
+                  <div>
+                    <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                      Briefing Focus
+                    </span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {TRAINING_FOCUSES.map((opt) => {
+                        const active = trainingFocus === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            disabled={submitting}
+                            onClick={() => setTrainingFocus(opt.id)}
+                            aria-pressed={active}
+                            className={`py-2 px-2 text-[11px] sm:text-xs font-semibold rounded-xl transition-all cursor-pointer truncate ${
+                              active
+                                ? 'neu-raised-sm text-[#0B5563] ring-1 ring-[#0B5563]/25'
+                                : 'neu-pressed text-[#43585D] hover:text-[#0B2228]'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+
+                  <div>
+                    <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">
+                      Leadership Team Size
+                    </span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {TEAM_SIZE_OPTIONS.map((opt) => {
+                        const active = teamSize === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            disabled={submitting}
+                            onClick={() => setTeamSize(opt.id)}
+                            aria-pressed={active}
+                            className={`py-2 px-2 text-[11px] sm:text-xs font-semibold rounded-xl transition-all cursor-pointer truncate ${
+                              active
+                                ? 'neu-raised-sm text-[#0B5563] ring-1 ring-[#0B5563]/25'
+                                : 'neu-pressed text-[#43585D] hover:text-[#0B2228]'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
               )}
 
               {lane === 'partner' && (

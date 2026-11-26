@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, X } from 'lucide-react';
 import type { OfferingItem } from '../data/memorandum';
+import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from '../lib/inquiries';
 
 interface ProgramBriefModalProps {
   offering: OfferingItem | null;
@@ -14,15 +15,32 @@ export function ProgramBriefModal({
   onProceedToInquiry,
 }: ProgramBriefModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
 
   useEffect(() => {
     if (offering) {
       const timer = window.setTimeout(() => closeButtonRef.current?.focus(), 40);
+      void fetchSiteConfig().then(setSiteConfig);
       return () => window.clearTimeout(timer);
     }
   }, [offering]);
 
   if (!offering) return null;
+
+  const getLiveStatusBanner = () => {
+    if (offering.id === 'incubation') {
+      return `Incubation intake: ${siteConfig.incubationStatus}`;
+    }
+    if (offering.id === 'training') {
+      return siteConfig.nextBriefingLabel;
+    }
+    if (offering.id === 'partnerships') {
+      return siteConfig.partnerSandboxNote;
+    }
+    return null;
+  };
+
+  const liveNote = getLiveStatusBanner();
 
   return (
     <div
@@ -55,6 +73,9 @@ export function ProgramBriefModal({
               {offering.title}
             </h3>
             <p className="text-sm text-[#43585D] leading-relaxed">{offering.brief.format}</p>
+            {liveNote && (
+              <p className="mt-2.5 text-xs font-semibold text-[#0B5563]">{liveNote}</p>
+            )}
           </div>
 
           <div className="space-y-3">

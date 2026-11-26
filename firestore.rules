@@ -19,6 +19,13 @@ service cloud.firestore {
       return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    function isValidEmailId(id) {
+      return id is string
+        && id.size() >= 3
+        && id.size() <= 160
+        && id.matches('^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$');
+    }
+
     function isSignedIn() {
       return request.auth != null && request.auth.token.email_verified == true;
     }
@@ -27,8 +34,16 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email == 'dejawoot99@gmail.com';
     }
 
+    function isInvitedAdmin() {
+      return isSignedIn()
+        && request.auth.token.email is string
+        && exists(/databases/$(database)/documents/admin_invites/$(request.auth.token.email));
+    }
+
     function isAdmin() {
-      return isBootstrappedAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      return isBootstrappedAdmin()
+        || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)))
+        || isInvitedAdmin();
     }
 
     function isValidLanePair(lane, subTrack) {
@@ -46,8 +61,11 @@ service cloud.firestore {
           'company',
           'email',
           'website',
+          'teamSize',
           'message',
           'status',
+          'stageTag',
+          'designPartner',
           'notes',
           'createdAt',
           'updatedAt'
@@ -59,8 +77,11 @@ service cloud.firestore {
           'company',
           'email',
           'website',
+          'teamSize',
           'message',
           'status',
+          'stageTag',
+          'designPartner',
           'notes',
           'createdAt',
           'updatedAt'
@@ -81,10 +102,18 @@ service cloud.firestore {
         && data.website is string
         && data.website.size() <= 300
         && (data.website == '' || data.website.matches('^https?://.*'))
+        && data.teamSize is string
+        && data.teamSize.size() <= 40
+        && data.teamSize in ['', '1-10 leaders', '11-30 leaders', '30+ leaders']
         && data.message is string
         && data.message.size() <= 2000
         && data.status is string
         && data.status in ['new', 'reviewing', 'scheduled', 'archived']
+        && data.stageTag is string
+        && data.stageTag.size() <= 40
+        && data.stageTag in ['', 'Concept', 'MVP', 'Revenue', 'Pilot Ready', 'Credit Pool', 'Cohort']
+        && data.designPartner is string
+        && data.designPartner.size() <= 140
         && data.notes is string
         && data.notes.size() <= 2000
         && data.createdAt is timestamp
@@ -106,6 +135,48 @@ service cloud.firestore {
         && data.createdAt is timestamp;
     }
 
+    function isValidAdminInvite(data, emailId) {
+      return data.keys().hasAll(['email', 'displayName', 'role', 'addedBy', 'createdAt'])
+        && data.keys().hasOnly(['email', 'displayName', 'role', 'addedBy', 'createdAt'])
+        && data.email is string
+        && data.email == emailId
+        && data.email.size() >= 3
+        && data.email.size() <= 160
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 120
+        && data.role is string
+        && data.role == 'admin'
+        && data.addedBy is string
+        && data.addedBy.size() >= 3
+        && data.addedBy.size() <= 160
+        && data.createdAt is timestamp;
+    }
+
+    function isValidSiteConfig(data) {
+      return data.keys().hasAll([
+          'incubationStatus',
+          'nextBriefingLabel',
+          'partnerSandboxNote',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'incubationStatus',
+          'nextBriefingLabel',
+          'partnerSandboxNote',
+          'updatedAt'
+        ])
+        && data.incubationStatus is string
+        && data.incubationStatus.size() <= 30
+        && data.incubationStatus in ['Open', 'By Intro', 'Waitlist']
+        && data.nextBriefingLabel is string
+        && data.nextBriefingLabel.size() <= 120
+        && data.partnerSandboxNote is string
+        && data.partnerSandboxNote.size() <= 160
+        && data.updatedAt is timestamp;
+    }
+
     // 4. Inquiries Collection
     match /inquiries/{inquiryId} {
       allow get: if isValidId(inquiryId) && isAdmin();
@@ -114,6 +185,8 @@ service cloud.firestore {
       allow create: if isValidId(inquiryId)
         && isValidInquiry(incoming())
         && incoming().status == 'new'
+        && incoming().stageTag == ''
+        && incoming().designPartner == ''
         && incoming().notes == ''
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
@@ -123,12 +196,18 @@ service cloud.firestore {
         && isValidInquiry(incoming())
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'status',
+          'stageTag',
+          'designPartner',
+          'notes',
+          'updatedAt'
+        ]);
 
       allow delete: if isValidId(inquiryId) && isAdmin();
     }
 
-    // 5. Admins Collection
+    // 5. Admins Collection (UID-based)
     match /admins/{adminId} {
       allow get: if isValidId(adminId) && (isAdmin() || (isSignedIn() && request.auth.uid == adminId));
       allow list: if isAdmin();
@@ -142,6 +221,30 @@ service cloud.firestore {
         && incoming().createdAt == existing().createdAt
         && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName']);
       allow delete: if isValidId(adminId) && isBootstrappedAdmin();
+    }
+
+    // 6. Admin Invites Collection (Email-based team access)
+    match /admin_invites/{emailId} {
+      allow get: if isValidEmailId(emailId)
+        && (isBootstrappedAdmin() || (isSignedIn() && request.auth.token.email == emailId));
+      allow list: if isBootstrappedAdmin();
+      allow create: if isValidEmailId(emailId)
+        && isBootstrappedAdmin()
+        && isValidAdminInvite(incoming(), emailId)
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isValidEmailId(emailId) && isBootstrappedAdmin();
+    }
+
+    // 7. Public Site Config (Dynamic Cohort & Briefing Labels)
+    match /public_config/{configId} {
+      allow get: if configId == 'site';
+      allow list: if false;
+      allow create, update: if configId == 'site'
+        && isAdmin()
+        && isValidSiteConfig(incoming())
+        && incoming().updatedAt == request.time;
+      allow delete: if false;
     }
   }
 }
