@@ -7,36 +7,27 @@ interface HeroSectionProps {
 
 export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
   return (
-    <section id="top" className="relative pt-10 pb-20 lg:pt-14 lg:pb-24 overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-24 -right-24 w-[460px] h-[460px] rounded-full bg-[#0B5563]/10 blur-3xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-40 -left-24 w-[380px] h-[380px] rounded-full bg-[#C89B3C]/12 blur-3xl"
-      />
-
-      <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
+    <section id="top" className="pt-12 pb-20 lg:pt-16 lg:pb-24">
+      <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="max-w-4xl">
-          <div className="inline-block neu-raised-sm rounded-2xl px-6 py-4 mb-8">
+          <div className="mb-9">
             <BrandLockup size="hero" />
           </div>
 
           <h1
-            className="font-display font-semibold tracking-[-0.035em] text-[#0B2228] leading-[1.01] mb-6"
-            style={{ fontSize: 'clamp(2.5rem, 5.2vw, 4.5rem)', textWrap: 'balance' }}
+            className="font-display font-semibold tracking-[-0.03em] text-[#0B2228] leading-[1.04] mb-6"
+            style={{ fontSize: 'clamp(2.4rem, 4.9vw, 4.25rem)', textWrap: 'balance' }}
           >
             Investing in agentic AI for enterprise.
           </h1>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
-            <p className="text-base sm:text-lg leading-[1.65] text-[#43585D] max-w-[46ch]">
+            <p className="text-base sm:text-[17px] leading-[1.65] text-[#43585D] max-w-[46ch]">
               We back teams building autonomous workflows for SMEs—businesses deeply underserved by
               agentic AI infrastructure.
             </p>
 
-            <div className="flex items-center gap-5 shrink-0">
+            <div className="flex items-center gap-4 shrink-0">
               <button
                 type="button"
                 onClick={onOpenInquiry}
@@ -46,7 +37,7 @@ export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
               </button>
               <a
                 href="#focus"
-                className="px-5 py-3 text-xs font-semibold text-[#0B2228] neu-raised-sm rounded-xl hover:text-[#0B5563] transition-colors whitespace-nowrap"
+                className="px-5 py-3.5 text-xs font-semibold text-[#0B2228] neu-raised-sm rounded-xl hover:text-[#0B5563] transition-colors whitespace-nowrap"
               >
                 Our Focus
               </a>

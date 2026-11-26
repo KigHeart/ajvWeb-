@@ -9,17 +9,12 @@ export function MandateSection() {
   const current = FOCUS_AREAS.find((v) => v.id === activeId) || FOCUS_AREAS[0];
 
   return (
-    <section id="focus" className="relative py-20 lg:py-28 overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 left-1/3 w-[520px] h-[520px] -translate-y-1/2 rounded-full bg-[#0B5563]/8 blur-3xl"
-      />
-
-      <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
+    <section id="focus" className="py-20 lg:py-28">
+      <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           <div className="lg:col-span-7">
             <div className="mb-10">
-              <span className="inline-block neu-pressed rounded-xl px-4 py-2 text-xs font-medium text-[#0B5563] mb-4">
+              <span className="text-xs font-medium tracking-wide text-[#0B5563] block mb-3">
                 Focus
               </span>
               <h2
@@ -30,7 +25,7 @@ export function MandateSection() {
               </h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {FOCUS_AREAS.map((area) => {
                 const isActive = area.id === current.id;
                 return (
@@ -46,7 +41,7 @@ export function MandateSection() {
                   >
                     <div className="flex items-baseline justify-between gap-6">
                       <span
-                        className={`font-display text-xl sm:text-2xl font-semibold tracking-[-0.02em] transition-colors duration-150 ${
+                        className={`font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] transition-colors duration-150 ${
                           isActive
                             ? 'text-[#0B5563]'
                             : 'text-[#0B2228] group-hover:text-[#0B5563]'
@@ -77,7 +72,7 @@ export function MandateSection() {
           </div>
 
           <div className="lg:col-span-5 lg:sticky lg:top-24">
-            <div className="neu-raised p-3 rounded-[28px]">
+            <div className="neu-raised p-2.5 sm:p-3 rounded-[26px]">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[16px] bg-[#E3E9EA]">
                 <AnimatePresence mode="wait">
                   <motion.div

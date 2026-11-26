@@ -54,12 +54,12 @@ export function HeroCinemaReel() {
   const current = REEL_FRAMES[activeIdx];
 
   return (
-    <div className="neu-raised p-2.5 sm:p-3.5 rounded-[28px]">
-      <div className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[2/1] w-full overflow-hidden rounded-[18px] bg-[#06262D]">
+    <div className="neu-raised p-2.5 sm:p-3 rounded-[26px]">
+      <div className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[2/1] w-full overflow-hidden rounded-[16px] bg-[#06262D]">
         <AnimatePresence mode="sync">
           <motion.div
             key={current.id}
-            initial={{ opacity: 0, scale: 1.05 }}
+            initial={{ opacity: 0, scale: 1.04 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{
@@ -79,7 +79,7 @@ export function HeroCinemaReel() {
 
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-[#06262D]/85 via-[#06262D]/25 to-transparent pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-t from-[#06262D]/82 via-[#06262D]/20 to-transparent pointer-events-none"
         />
 
         <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto z-10">
@@ -90,10 +90,17 @@ export function HeroCinemaReel() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="glass-dark rounded-2xl px-5 py-3.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
+              className="glass-dark rounded-xl px-4 py-3 sm:px-5 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3"
             >
-              <span className="font-mono text-xs text-[#E2C275] shrink-0">{current.tag}</span>
-              <span className="text-sm sm:text-base text-white font-medium">{current.caption}</span>
+              <span className="font-display text-xs font-semibold text-[#E2C275] shrink-0">
+                {current.tag}
+              </span>
+              <span className="hidden sm:inline text-white/35" aria-hidden="true">
+                ·
+              </span>
+              <span className="text-xs sm:text-sm text-white/95 font-medium">
+                {current.caption}
+              </span>
             </motion.div>
           </AnimatePresence>
         </div>
