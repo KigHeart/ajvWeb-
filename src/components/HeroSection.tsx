@@ -1,6 +1,5 @@
-import { BRAND_META } from '../data/memorandum';
+import { BrandLockup } from './BrandLockup';
 import { HeroCinemaReel } from './HeroCinemaReel';
-import { ResilientImage } from './ResilientImage';
 
 interface HeroSectionProps {
   onOpenInquiry: () => void;
@@ -20,13 +19,8 @@ export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
 
       <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="max-w-4xl">
-          <div className="inline-block neu-raised-sm rounded-2xl px-5 py-3 mb-8">
-            <ResilientImage
-              src={BRAND_META.logoSrc}
-              alt="Ajentir Ventures"
-              className="h-11 sm:h-13 w-auto object-contain"
-              fallbackTitle="Ajentir Ventures"
-            />
+          <div className="inline-block neu-raised-sm rounded-2xl px-6 py-4 mb-8">
+            <BrandLockup size="hero" />
           </div>
 
           <h1

@@ -54,9 +54,15 @@ export function Header({ onOpenInquiry }: HeaderProps) {
       <div className="relative max-w-[1200px] mx-auto glass-light rounded-2xl px-6 h-15 flex items-center justify-between gap-8 overflow-hidden">
         <a
           href="#top"
-          className="font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#0B2228] whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#0B5563]"
+          className="inline-flex items-center gap-2.5 font-display text-lg sm:text-xl font-semibold tracking-[-0.02em] text-[#0B2228] whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#0B5563]"
         >
-          Ajentir Ventures
+          <img
+            src="/assets/ajv-halo-emblem.png"
+            alt=""
+            aria-hidden="true"
+            className="h-6 w-auto object-contain shrink-0"
+          />
+          <span>Ajentir Ventures</span>
         </a>
 
         <nav

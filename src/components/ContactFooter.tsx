@@ -1,6 +1,6 @@
 import { BRAND_META } from '../data/memorandum';
+import { BrandLockup } from './BrandLockup';
 import type { LegalTab } from './LegalModal';
-import { ResilientImage } from './ResilientImage';
 
 interface ContactFooterProps {
   onOpenInquiry: () => void;
@@ -39,13 +39,8 @@ export function ContactFooter({ onOpenInquiry, onOpenLegal }: ContactFooterProps
       <footer className="pb-12 pt-4 text-[#43585D]">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pb-8 border-b border-[#D6DFE1]">
-            <div className="neu-raised-sm rounded-xl px-4 py-2 inline-block self-start">
-              <ResilientImage
-                src={BRAND_META.logoSrc}
-                alt="Ajentir Ventures"
-                className="h-8 w-auto object-contain"
-                fallbackTitle="Ajentir Ventures"
-              />
+            <div className="neu-raised-sm rounded-2xl px-5 py-3 inline-block self-start">
+              <BrandLockup size="footer" />
             </div>
 
             <nav aria-label="Footer" className="flex flex-wrap gap-8 text-xs font-medium">

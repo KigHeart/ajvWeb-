@@ -9,7 +9,7 @@ export interface FocusArea {
 export const BRAND_META = {
   name: 'Ajentir Ventures',
   year: '2026',
-  logoSrc: '/assets/aistudio/AJENTIR_Ventures_Turquoise_Gold_Logo_c1541649.png',
+  logoEmblemSrc: '/assets/ajv-halo-emblem.png',
 };
 
 export const FOCUS_AREAS: FocusArea[] = [

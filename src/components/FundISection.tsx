@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Pause, Play } from 'lucide-react';
 
 interface FundISectionProps {
   onOpenInquiry: () => void;
@@ -29,15 +28,13 @@ const APPROACH_SLIDES = [
 
 export function FundISection({ onOpenInquiry }: FundISectionProps) {
   const [activeIdx, setActiveIdx] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
-    if (!isPlaying) return;
     const timer = window.setInterval(() => {
       setActiveIdx((prev) => (prev + 1) % APPROACH_SLIDES.length);
     }, 4500);
     return () => window.clearInterval(timer);
-  }, [isPlaying]);
+  }, []);
 
   const current = APPROACH_SLIDES[activeIdx];
 
@@ -67,73 +64,13 @@ export function FundISection({ onOpenInquiry }: FundISectionProps) {
             </h2>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsPlaying((prev) => !prev)}
-              aria-label={isPlaying ? 'Pause conviction reel' : 'Play conviction reel'}
-              className="glass-dark w-11 h-11 rounded-xl flex items-center justify-center text-white hover:text-[#E2C275] transition-colors cursor-pointer"
-            >
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={onOpenInquiry}
-              className="px-6 py-3 text-xs font-semibold text-[#06262D] bg-[#E2C275] hover:bg-[#ECD08D] rounded-xl transition-colors cursor-pointer whitespace-nowrap"
-            >
-              Connect With Us
-            </button>
-          </div>
-        </div>
-
-        <div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3"
-          role="tablist"
-          aria-label="Investment conviction"
-        >
-          {APPROACH_SLIDES.map((slide, idx) => {
-            const active = idx === activeIdx;
-            return (
-              <button
-                key={slide.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => {
-                  setActiveIdx(idx);
-                  setIsPlaying(false);
-                }}
-                className={`text-left rounded-2xl p-4 transition-all cursor-pointer ${
-                  active
-                    ? 'glass-dark border-[#E2C275]/45'
-                    : 'bg-white/[0.03] border border-white/10 hover:bg-white/[0.06]'
-                }`}
-              >
-                <div className="h-1 w-full rounded-full bg-white/15 overflow-hidden mb-3">
-                  {active ? (
-                    <motion.div
-                      key={`${slide.id}-${isPlaying}`}
-                      initial={{ scaleX: isPlaying ? 0 : 1 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ duration: isPlaying ? 4.5 : 0.2, ease: 'linear' }}
-                      style={{ transformOrigin: 'left' }}
-                      className="h-full w-full bg-[#E2C275]"
-                    />
-                  ) : (
-                    <div className="h-full w-0" />
-                  )}
-                </div>
-                <span
-                  className={`font-mono text-xs block truncate ${
-                    active ? 'text-[#E2C275] font-medium' : 'text-[#A9BCC0]'
-                  }`}
-                >
-                  {slide.tab}
-                </span>
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            onClick={onOpenInquiry}
+            className="self-start sm:self-auto px-6 py-3 text-xs font-semibold text-[#06262D] bg-[#E2C275] hover:bg-[#ECD08D] rounded-xl transition-colors cursor-pointer whitespace-nowrap shrink-0"
+          >
+            Connect With Us
+          </button>
         </div>
 
         <div className="glass-dark rounded-3xl p-8 sm:p-10 min-h-[168px] flex items-center">
@@ -143,10 +80,11 @@ export function FundISection({ onOpenInquiry }: FundISectionProps) {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center w-full"
             >
               <div className="lg:col-span-5">
+                <span className="font-mono text-xs text-[#E2C275] block mb-2">{current.tab}</span>
                 <h3 className="font-display text-2xl sm:text-3xl font-semibold text-white tracking-[-0.02em]">
                   {current.headline}
                 </h3>
