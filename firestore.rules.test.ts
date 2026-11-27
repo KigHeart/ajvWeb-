@@ -6,7 +6,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { collection, doc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-ajentir-security';
 let testEnv: RulesTestEnvironment;
@@ -136,6 +136,37 @@ test('verified user with matching admin invitation can list inquiries', async ()
     email_verified: true,
   }).firestore();
   await assertSucceeds(getDocs(collection(db, 'inquiries')));
+});
+
+test('owner revocation removes both registered and invitation grants', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'admins', 'revoked_uid'), {
+      email: 'revoked@example.com',
+      displayName: 'Revoked Admin',
+      role: 'admin',
+      createdAt: new Date(),
+    });
+    await setDoc(doc(context.firestore(), 'admin_invites', 'revoked@example.com'), {
+      email: 'revoked@example.com',
+      displayName: 'Revoked Admin',
+      role: 'admin',
+      addedBy: 'dejawoot99@gmail.com',
+      createdAt: new Date(),
+    });
+  });
+
+  const ownerDb = testEnv.authenticatedContext('owner', {
+    email: 'dejawoot99@gmail.com',
+    email_verified: true,
+  }).firestore();
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'admins', 'revoked_uid')));
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'admin_invites', 'revoked@example.com')));
+
+  const revokedDb = testEnv.authenticatedContext('revoked_uid', {
+    email: 'revoked@example.com',
+    email_verified: true,
+  }).firestore();
+  await assertFails(getDocs(collection(revokedDb, 'inquiries')));
 });
 
 test('expired invitation cannot grant admin access', async () => {
