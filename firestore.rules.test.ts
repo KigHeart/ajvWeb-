@@ -200,3 +200,24 @@ test('admins may change triage fields but cannot rewrite submitter identity', as
     updatedAt: serverTimestamp(),
   }));
 });
+
+test('owner can create an invitation with an authentic audit actor only', async () => {
+  const db = testEnv.authenticatedContext('owner', {
+    email: 'dejawoot99@gmail.com',
+    email_verified: true,
+  }).firestore();
+  await assertSucceeds(setDoc(doc(db, 'admin_invites', 'newadmin@example.com'), {
+    email: 'newadmin@example.com',
+    displayName: 'New Admin',
+    role: 'admin',
+    addedBy: 'dejawoot99@gmail.com',
+    createdAt: serverTimestamp(),
+  }));
+  await assertFails(setDoc(doc(db, 'admin_invites', 'spoofed@example.com'), {
+    email: 'spoofed@example.com',
+    displayName: 'Spoofed Actor',
+    role: 'admin',
+    addedBy: 'attacker@example.com',
+    createdAt: serverTimestamp(),
+  }));
+});
