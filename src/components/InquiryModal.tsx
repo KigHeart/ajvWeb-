@@ -160,7 +160,14 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
     onClose();
   };
 
-  const activeCopy = LANE_COPY[lane];
+  const activeCopy =
+    lane === 'training' && trainingFocus === 'workflow'
+      ? {
+          prompt: 'Which workflow should we examine?',
+          placeholder:
+            'Describe how the work is done today, the people and systems involved, where delays or errors occur, and how often the process is repeated...',
+        }
+      : LANE_COPY[lane];
 
   const getTrackSummaryLabel = () => {
     if (lane === 'founder') {
@@ -168,6 +175,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
       return `Founders · ${found?.label ?? 'Investment'}`;
     }
     if (lane === 'training') {
+      if (trainingFocus === 'workflow') return 'Organisation · Workflow Discovery';
       const found = TRAINING_FOCUSES.find((t) => t.id === trainingFocus);
       return `Executive Training · ${found?.label ?? 'Briefing'}`;
     }
@@ -182,6 +190,9 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
         : 'Our investment team reviews every submission directly and replies within two business days regarding next steps.';
     }
     if (lane === 'training') {
+      if (trainingFocus === 'workflow') {
+        return 'We will review the workflow you describe and follow up within two business days to discuss a discovery session. The aim is to understand the operational problem and assess whether it points to a repeatable opportunity for agentic software.';
+      }
       return 'We will share available executive briefing dates and a concise syllabus tailored to your leadership team within two business days.';
     }
     return 'Our partnerships lead will respond within two business days to schedule an introductory discussion on sandbox or ecosystem collaboration.';
