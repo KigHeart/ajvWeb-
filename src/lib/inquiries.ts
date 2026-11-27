@@ -45,6 +45,7 @@ export interface CreateInquiryInput {
   email: string;
   website: string;
   teamSize: TeamSizeOption;
+  preferredSession?: string;
   message: string;
 }
 
@@ -57,6 +58,7 @@ export interface InquiryRecord {
   email: string;
   website: string;
   teamSize: TeamSizeOption;
+  preferredSession: string;
   message: string;
   status: InquiryStatus;
   stageTag: StageTag;
@@ -115,6 +117,7 @@ export async function submitInquiry(input: CreateInquiryInput): Promise<{ id: st
       email,
       website,
       teamSize,
+      preferredSession: (input.preferredSession ?? '').trim().slice(0, 140),
       message,
       status: 'new' as InquiryStatus,
       stageTag: '' as StageTag,
@@ -197,6 +200,7 @@ export function subscribeToInquiries(
           email: typeof data.email === 'string' ? data.email : '',
           website: typeof data.website === 'string' ? data.website : '',
           teamSize: (data.teamSize as TeamSizeOption) ?? '',
+          preferredSession: typeof data.preferredSession === 'string' ? data.preferredSession : '',
           message: typeof data.message === 'string' ? data.message : '',
           status: (data.status as InquiryStatus) ?? 'new',
           stageTag: (data.stageTag as StageTag) ?? '',
