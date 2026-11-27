@@ -7,7 +7,7 @@
 4. **Create-Time State Integrity**: Every newly created inquiry MUST start with `status == 'new'`, `stageTag == ''`, `designPartner == ''`, `notes == ''`, `createdAt == request.time`, and `updatedAt == request.time`.
 5. **Immutable Audit Fields & Temporal Integrity**: After creation, `createdAt`, `lane`, `subTrack`, `fullName`, `company`, `email`, `website`, `teamSize`, `preferredSession`, and `message` remain immutable; admin triage updates are constrained via `affectedKeys().hasOnly(['status', 'stageTag', 'designPartner', 'notes', 'updatedAt'])` and `updatedAt == request.time`.
 6. **Public Briefing Sessions (`briefing_sessions`)**: List/get reads for non-admins strictly require `resource.data.isOpen == true`; closed sessions and all create/update/delete operations are restricted to `isAdmin()`.
-7. **Verified Admin Authentication & Team Roster**: Admin privileges require `request.auth != null && request.auth.token.email_verified == true` and match `dejawoot99@gmail.com` or `/admins/{uid}` or `/admin_invites/{verifiedEmail}`. Only the bootstrapped owner may create or revoke `/admins` and `/admin_invites` records.
+7. **Verified Admin Authentication & Team Roster**: Admin privileges require `request.auth != null && request.auth.token.email_verified == true` and match `dejawoot99@gmail.com` or `/admins/{uid}` or `/admin_invites/{verifiedEmail}`. Only the bootstrapped owner may create or revoke `/admins` and `/admin_invites` records; an invitation's `addedBy` must equal the authenticated owner's email.
 8. **Public CMS Isolation**: `/public_config/site` is the only publicly readable `get` document (no `list` queries allowed) and holds zero PII, writable only by `isAdmin()`.
 
 ## 2. The "Dirty Dozen" Adversarial Payloads
