@@ -23,3 +23,14 @@
 10. **Activity Subcollection Tampering**: Admin tries to spoof `actorEmail` as another admin or delete/edit an existing `/activity` entry -> MUST return `PERMISSION_DENIED`.
 11. **Invalid Lane Pairing / Malformed Email / Unsafe URL**: Public user submits mismatched `lane` + `subTrack`, invalid `email`, or `website: 'javascript:alert(1)'` -> MUST return `PERMISSION_DENIED`.
 12. **Public CMS Tampering**: Unauthenticated or non-admin user tries to write `/public_config/site` or `/briefing_sessions/{id}` -> MUST return `PERMISSION_DENIED`.
+
+
+## 3. Executable Verification
+
+The cases above are implemented as Firestore Emulator tests in `firestore.rules.test.ts`. Run them with `npm run test:rules`; CI runs this suite before the Pages build. The suite is isolated to the emulator and must never be pointed at production data.
+
+## 4. Additional Production Controls
+
+Firestore rules are necessary but do not provide per-IP rate limiting or prove that a request originated from the intended website. Configure Firebase App Check for the production web app, monitor legitimate traffic, and then enforce App Check for Cloud Firestore in Firebase Console. Until enforcement is enabled, public inquiry creation remains exposed to automated abuse even though document reads and privileged writes are denied.
+
+GitHub Pages serves only the static frontend; it does not run `server.ts`. Do not put secrets in browser code or Vite-exposed variables. Notifications and future agentic actions must run in a separately deployed trusted backend with scoped credentials and deterministic authorization.
