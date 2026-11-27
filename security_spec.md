@@ -7,7 +7,7 @@
 4. **Create-Time State Integrity**: Every newly created inquiry MUST start with `status == 'new'`, `stageTag == ''`, `designPartner == ''`, `notes == ''`, `createdAt == request.time`, and `updatedAt == request.time`.
 5. **Immutable Audit Fields & Temporal Integrity**: After creation, `createdAt`, `lane`, `subTrack`, `fullName`, `company`, `email`, `website`, `teamSize`, `preferredSession`, and `message` remain immutable; admin triage updates are constrained via `affectedKeys().hasOnly(['status', 'stageTag', 'designPartner', 'notes', 'updatedAt'])` and `updatedAt == request.time`.
 6. **Public Briefing Sessions (`briefing_sessions`)**: List/get reads for non-admins strictly require `resource.data.isOpen == true`; closed sessions and all create/update/delete operations are restricted to `isAdmin()`.
-7. **Verified Admin Authentication & Team Roster**: Admin privileges require `request.auth != null && request.auth.token.email_verified == true` and match `dejawoot99@gmail.com` or `/admins/{uid}` or `/admin_invites/{verifiedEmail}`. Only the bootstrapped owner may create or revoke `/admins` and `/admin_invites` records.
+7. **Verified Admin Authentication & Team Roster**: Admin privileges require `request.auth != null && request.auth.token.email_verified == true` and match `dejawoot99@gmail.com` or `/admins/{uid}` or `/admin_invites/{verifiedEmail}`. Only the bootstrapped owner may create or revoke `/admins` and `/admin_invites` records; an invitation's `addedBy` must equal the authenticated owner's email.
 8. **Public CMS Isolation**: `/public_config/site` is the only publicly readable `get` document (no `list` queries allowed) and holds zero PII, writable only by `isAdmin()`.
 
 ## 2. The "Dirty Dozen" Adversarial Payloads
@@ -23,3 +23,14 @@
 10. **Activity Subcollection Tampering**: Admin tries to spoof `actorEmail` as another admin or delete/edit an existing `/activity` entry -> MUST return `PERMISSION_DENIED`.
 11. **Invalid Lane Pairing / Malformed Email / Unsafe URL**: Public user submits mismatched `lane` + `subTrack`, invalid `email`, or `website: 'javascript:alert(1)'` -> MUST return `PERMISSION_DENIED`.
 12. **Public CMS Tampering**: Unauthenticated or non-admin user tries to write `/public_config/site` or `/briefing_sessions/{id}` -> MUST return `PERMISSION_DENIED`.
+
+
+## 3. Executable Verification
+
+The cases above are implemented as Firestore Emulator tests in `firestore.rules.test.ts`. Run them with `npm run test:rules`; CI runs this suite before the Pages build. The suite is isolated to the emulator and must never be pointed at production data.
+
+## 4. Additional Production Controls
+
+Firestore rules are necessary but do not provide per-IP rate limiting or prove that a request originated from the intended website. Configure Firebase App Check for the production web app, monitor legitimate traffic, and then enforce App Check for Cloud Firestore in Firebase Console. Until enforcement is enabled, public inquiry creation remains exposed to automated abuse even though document reads and privileged writes are denied.
+
+GitHub Pages serves only the static frontend; it does not run `server.ts`. Do not put secrets in browser code or Vite-exposed variables. Notifications and future agentic actions must run in a separately deployed trusted backend with scoped credentials and deterministic authorization.

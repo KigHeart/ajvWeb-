@@ -135,16 +135,12 @@ export function AdminPortalModal({
   const [configSaved, setConfigSaved] = useState(false);
   const [configError, setConfigError] = useState('');
 
-  // Team Invites & Server Alerts state
+  // Team invitation state
   const [invites, setInvites] = useState<AdminInviteRecord[]>([]);
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteError, setInviteError] = useState('');
   const [addingInvite, setAddingInvite] = useState(false);
-  const [alertHealth, setAlertHealth] = useState<{
-    emailAlertsConfigured: boolean;
-    webhookAlertsConfigured: boolean;
-  } | null>(null);
 
   const isOwner = isOwnerEmail(user?.email);
 
@@ -195,18 +191,6 @@ export function AdminPortalModal({
     );
 
     void fetchSiteConfig().then(setSiteConfig);
-    void fetch('/api/health')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && typeof data.emailAlertsConfigured === 'boolean') {
-          setAlertHealth({
-            emailAlertsConfigured: data.emailAlertsConfigured,
-            webhookAlertsConfigured: Boolean(data.webhookAlertsConfigured),
-          });
-        }
-      })
-      .catch(() => setAlertHealth(null));
-
     let unsubscribeInvites = () => {};
     if (isOwner) {
       unsubscribeInvites = subscribeToAdminInvites(
@@ -978,35 +962,13 @@ export function AdminPortalModal({
               <div className="lg:col-span-5">
                 <div className="neu-pressed rounded-2xl p-5 space-y-3">
                   <h4 className="font-display text-sm font-semibold text-[#0B2228]">
-                    Notification Server Status
+                    Notification Delivery
                   </h4>
                   <p className="text-xs text-[#43585D] leading-relaxed">
-                    Every submission always saves to Firestore first. When hosted with the Node
-                    server (`server.ts`), configure environment secrets in AI Studio Secrets (not in
-                    client code):
+                    Email and webhook delivery are intentionally disabled. Inquiries are stored
+                    directly in Firestore. A trusted server-side event handler must be deployed
+                    and tested before notifications are enabled.
                   </p>
-                  <div className="space-y-2 text-xs pt-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#43585D]">Email Alerts (`RESEND_API_KEY`)</span>
-                      <span className="font-semibold text-[#0B2228]">
-                        {alertHealth
-                          ? alertHealth.emailAlertsConfigured
-                            ? 'Active'
-                            : 'Not set'
-                          : 'Static host'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#43585D]">Webhook (`ALERT_WEBHOOK_URL`)</span>
-                      <span className="font-semibold text-[#0B2228]">
-                        {alertHealth
-                          ? alertHealth.webhookAlertsConfigured
-                            ? 'Active'
-                            : 'Not set'
-                          : 'Static host'}
-                      </span>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
