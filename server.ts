@@ -12,6 +12,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const IS_PROD = process.env.NODE_ENV === "production";
 const DB_PATH = process.env.AJENTIR_DB_PATH || path.resolve(__dirname, "data/ajentir.sqlite");
 const store = openDatabase(DB_PATH);
+const deskStore = openDatabase(process.env.VENTURE_DESK_DB_PATH || path.resolve(__dirname, "data/venture-desk.sqlite"));
 const app = express();
 app.disable("x-powered-by");
 app.disable("etag");
@@ -93,7 +94,7 @@ app.use("/api/venture-desk", express.json({ limit: "16kb", strict: true }), desk
 app.get("/api/venture-desk", (req, res) => {
   const kind = req.query.kind;
   if (kind !== undefined && !validKind(kind)) { res.status(400).json({ error: "Invalid item type" }); return; }
-  res.json({ items: store.listDeskItems(kind as DeskKind | undefined) });
+  res.json({ items: deskStore.listDeskItems(kind as DeskKind | undefined) });
 });
 app.post("/api/venture-desk", (req, res) => {
   const kind = req.body?.kind;
@@ -108,17 +109,17 @@ app.post("/api/venture-desk", (req, res) => {
     dueDate: (input.dueDate as string) || "", description: (input.description as string) || "",
     data: (input.data as Record<string, unknown>) || {}, createdAt: now, updatedAt: now,
   };
-  res.status(201).json({ item: store.createDeskItem(item) });
+  res.status(201).json({ item: deskStore.createDeskItem(item) });
 });
 app.patch("/api/venture-desk/:id", (req, res) => {
   const patch = cleanDeskInput(req.body);
   if (!patch || Object.keys(patch).length === 0) { res.status(400).json({ error: "No valid fields supplied" }); return; }
-  const item = store.updateDeskItem(req.params.id, patch, new Date().toISOString());
+  const item = deskStore.updateDeskItem(req.params.id, patch, new Date().toISOString());
   if (!item) { res.status(404).json({ error: "Item not found" }); return; }
   res.json({ item });
 });
 app.delete("/api/venture-desk/:id", (req, res) => {
-  if (!store.deleteDeskItem(req.params.id)) { res.status(404).json({ error: "Item not found" }); return; }
+  if (!deskStore.deleteDeskItem(req.params.id)) { res.status(404).json({ error: "Item not found" }); return; }
   res.status(204).end();
 });
 
@@ -142,6 +143,6 @@ if (!IS_PROD) {
 }
 
 const httpServer = app.listen(PORT, "0.0.0.0", () => console.log(`Ajentir self-hosted server listening on port ${PORT}`));
-function shutdown() { httpServer.close(() => { store.close(); process.exit(0); }); }
+function shutdown() { httpServer.close(() => { deskStore.close(); store.close(); process.exit(0); }); }
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
