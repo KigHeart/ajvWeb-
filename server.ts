@@ -15,6 +15,9 @@ const store = openDatabase(DB_PATH);
 const app = express();
 app.disable("x-powered-by");
 app.disable("etag");
+// Trust only the explicitly configured reverse-proxy address. Without this,
+// Express ignores forwarded headers and uses the direct socket address.
+app.set("trust proxy", process.env.AJENTIR_TRUSTED_PROXY || false);
 
 app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -33,8 +36,8 @@ app.get("/api/health", (_req, res) => {
 
 const windows = new Map<string, { start: number; count: number }>();
 function rateLimit(req: Request, res: Response, next: NextFunction) {
-  // Do not trust X-Forwarded-For by default; configure a known reverse proxy explicitly if needed.
-  const key = req.socket.remoteAddress || "unknown";
+  // req.ip is the socket peer unless AJENTIR_TRUSTED_PROXY names the exact proxy.
+  const key = req.ip || req.socket.remoteAddress || "unknown";
   const now = Date.now();
   let bucket = windows.get(key);
   if (!bucket || now - bucket.start >= 60_000) {
