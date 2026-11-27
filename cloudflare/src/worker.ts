@@ -45,6 +45,8 @@ async function consumeRateLimit(request: Request, env: Env): Promise<boolean> {
     "ON CONFLICT(key_hash, window_bucket) DO UPDATE SET request_count = request_count + 1 " +
     "RETURNING request_count",
   ).bind(key, bucket).first<{ request_count: number }>();
+  // Keep only two hours of buckets; the database stores a salted hash, never the raw IP.
+  await env.DB.prepare("DELETE FROM rate_limits WHERE window_bucket < ?").bind(bucket - 120).run();
   return Boolean(row && row.request_count <= 5);
 }
 

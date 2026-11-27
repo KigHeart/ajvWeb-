@@ -54,3 +54,41 @@ The rules tests use the Firestore Emulator and isolated `demo-ajentir-security` 
 - App Check enforcement, API-key restrictions, MFA, GitHub branch protection, backups, and monitoring must be configured in their respective consoles.
 - The browser's Firebase configuration is public by design. Security depends on correct server-enforced Firestore rules and App Check enforcement.
 - Email delivery is intentionally disabled until a trusted backend trigger is deployed.
+
+
+## Cloudflare independence migration (in progress)
+
+The strategic target is to remove Firebase as an application dependency and operate Ajentir's backend on Cloudflare. This is a staged migration, not a production cutover.
+
+### Phase 1 — backend foundation
+
+- A Cloudflare Worker API is being introduced under `cloudflare/`.
+- D1 schema covers inquiries and hashed, time-bucketed rate-limit counters.
+- Public inquiry writes require an exact allowed Origin, bounded JSON payload, valid lane/sub-track pairing, Turnstile verification on the server, and a five-per-minute per-client limit.
+- Turnstile secrets and the rate-limit salt belong only in Worker secrets.
+- The current React application still talks to Firebase. The Worker is not yet deployed or connected to the live form.
+- The current Firebase App Check/reCAPTCHA work is superseded by this migration direction. Do not create new Google reCAPTCHA resources for Ajentir.
+
+### Phase 2 — public inquiry cutover
+
+- Add the Turnstile client widget and connect the inquiry form to the Worker.
+- Provision D1 and apply migrations in a Cloudflare account controlled by Ajentir.
+- Deploy the Worker to a staging hostname, test abuse controls and data persistence, then cut over the public form.
+- Keep Firebase data intact until parity and rollback have been verified.
+
+### Phase 3 — admin identity and data migration
+
+- Replace Firebase Authentication with a server-verified identity provider. Cloudflare Access is the initial candidate for the private admin portal.
+- Verify Access JWTs in the Worker; never accept browser-provided admin flags or email claims without signature and issuer/audience validation.
+- Implement admin-only list, triage, delete, configuration and invitation endpoints with explicit authorization checks and audit records.
+- Migrate existing Firestore inquiries and site configuration with a repeatable export/import process and row-count/hash reconciliation.
+- Only after production validation should Firebase client dependencies, rules, project configuration and old resources be retired.
+
+### Phase 4 — agentic services
+
+- Add a separate server-side agent orchestration boundary only after identity, data access, audit logging and authorization are established.
+- Models may propose typed actions; deterministic policy and authorization decide whether they execute.
+- Financial actions, external communications, access changes and irreversible writes require human approval.
+- Do not expose model provider keys or privileged database credentials to the browser or model context.
+
+Cloudflare resources, secrets and production routing require access to the Ajentir-owned Cloudflare account. Repository code alone cannot provision or activate those account resources.

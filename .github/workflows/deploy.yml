@@ -33,11 +33,11 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Type-check
         run: npm run lint
-      - name: Firestore security rules tests
+      - name: Firestore security rules tests (legacy Firebase during migration)
         run: npm run test:rules
+      - name: Cloudflare API validation tests
+        run: npm run test:api
       - name: Build site
-        env:
-          VITE_RECAPTCHA_SITE_KEY: ${{ vars.VITE_RECAPTCHA_SITE_KEY }}
         run: npm run build
 
   deploy:
