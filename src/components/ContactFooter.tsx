@@ -54,6 +54,9 @@ export function ContactFooter({
               <a href="#focus" className="hover:text-[#0B2228] transition-colors">
                 Focus
               </a>
+              <a href="#venture-discovery" className="hover:text-[#0B2228] transition-colors">
+                Venture Discovery
+              </a>
               <a href="#approach" className="hover:text-[#0B2228] transition-colors">
                 Approach
               </a>
