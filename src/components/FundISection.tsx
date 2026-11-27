@@ -21,6 +21,12 @@ const APPROACH_SLIDES = [
     body: 'We equip SME leaders to govern shadow AI safely while pairing incubated builders with early design partners before spinout.',
   },
   {
+    id: 'workflow-discovery',
+    kicker: 'Workflow-to-Venture Discovery',
+    headline: 'Find validated demand before building.',
+    body: 'We map real SME and enterprise workflows to uncover repeatable problems, redesign opportunities, and new markets for agentic software—then connect validated demand with builders and design partners.',
+  },
+  {
     id: 'partners',
     kicker: 'Ecosystem Alignment',
     headline: 'Model providers, banks, and operators.',
