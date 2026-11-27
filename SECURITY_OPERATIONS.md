@@ -20,7 +20,7 @@ These controls require access to the Firebase and GitHub project consoles; repos
 
 ## Agentic AI: security gate before implementation
 
-Agentic features are intentionally not enabled in this phase. Do not put model API keys in React, Vite-exposed variables, the repository, or browser storage. The `@google/genai` browser-facing dependency has been removed until a server-side AI service is designed and reviewed.
+Agentic features are intentionally not enabled in this phase. Do not put model API keys in React, Vite-exposed variables, the repository, or browser storage. The unused `@google/genai` dependency has been removed. No agent runtime is currently implemented.
 
 The eventual architecture should have:
 
