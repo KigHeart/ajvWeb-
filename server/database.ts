@@ -15,7 +15,7 @@ export type DeskItem = {
   dueDate: string; description: string; data: Record<string, unknown>;
   createdAt: string; updatedAt: string;
 };
-type DeskInput = Partial<Omit<DeskItem, "id" | "createdAt" | "updatedAt" | "data">> & {
+export type DeskInput = Partial<Omit<DeskItem, "id" | "createdAt" | "updatedAt" | "data">> & {
   title?: string; data?: Record<string, unknown>;
 };
 
