@@ -146,12 +146,30 @@ export async function checkAdminAccess(
   if (isOwnerEmail(email)) return true;
 
   try {
+    const normalizedEmail = email?.trim().toLowerCase();
     const uidSnap = await getDoc(doc(db, ADMINS_PATH, uid));
-    if (uidSnap.exists()) return true;
+    if (uidSnap.exists()) {
+      const admin = uidSnap.data();
+      if (
+        normalizedEmail &&
+        typeof admin.email === 'string' &&
+        admin.email.toLowerCase() === normalizedEmail &&
+        admin.role === 'admin'
+      ) {
+        return true;
+      }
+    }
 
-    if (email) {
-      const inviteSnap = await getDoc(doc(db, INVITES_PATH, email.toLowerCase()));
-      return inviteSnap.exists();
+    if (normalizedEmail) {
+      const inviteSnap = await getDoc(doc(db, INVITES_PATH, normalizedEmail));
+      if (inviteSnap.exists()) {
+        const invite = inviteSnap.data();
+        return (
+          typeof invite.email === 'string' &&
+          invite.email.toLowerCase() === normalizedEmail &&
+          invite.role === 'admin'
+        );
+      }
     }
     return false;
   } catch {
