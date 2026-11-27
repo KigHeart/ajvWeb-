@@ -976,7 +976,7 @@ export function AdminPortalModal({
                   </>
                 ) : (
                   <p className="text-xs text-[#43585D]">
-                    Only the account owner ({ADMIN_OWNER_EMAIL}) can add or revoke team members.
+                    Only the account owner ({ADMIN_OWNER_EMAIL}) can add or revoke invitations. Invitations expire after 30 days.
                   </p>
                 )}
               </div>
