@@ -145,30 +145,52 @@ export function AdminPortalModal({
   const isOwner = isOwnerEmail(user?.email);
 
   useEffect(() => {
+    let checkId = 0;
+    let disposed = false;
+
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
+      const currentCheck = ++checkId;
       setUser(nextUser);
       setAuthReady(true);
       setAuthError('');
       setDataError('');
 
+      // Immediately isolate the new auth state from data loaded for the
+      // previous account while its authorization check is in flight.
+      setIsAdmin(false);
+      setInquiries([]);
+      setInvites([]);
+      setLoadingInquiries(false);
+      setSelectedId(null);
+
       if (!nextUser) {
-        setIsAdmin(false);
-        setInquiries([]);
-        setInvites([]);
+        setCheckingRole(false);
         return;
       }
 
       setCheckingRole(true);
-      const allowed = await checkAdminAccess(
-        nextUser.uid,
-        nextUser.email,
-        nextUser.emailVerified,
-      );
+      let allowed = false;
+      try {
+        allowed = await checkAdminAccess(
+          nextUser.uid,
+          nextUser.email,
+          nextUser.emailVerified,
+        );
+      } catch {
+        allowed = false;
+      }
+
+      // Ignore a late result if another auth event has superseded this one.
+      if (disposed || currentCheck !== checkId) return;
       setIsAdmin(allowed);
       setCheckingRole(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      disposed = true;
+      checkId += 1;
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
