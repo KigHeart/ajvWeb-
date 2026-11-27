@@ -17,7 +17,6 @@ const TRACKS: Record<InquiryPayload["lane"], readonly string[]> = {
   training: ["governance", "workflow", "workshop"],
   partner: ["model-provider", "bank", "enterprise"],
 };
-
 const TEAM_SIZES = ["", "1-10 leaders", "11-30 leaders", "30+ leaders"];
 
 function boundedString(value: unknown, max: number): string | null {
@@ -42,32 +41,21 @@ export function validateInquiry(value: unknown): InquiryPayload | null {
   const message = boundedString(data.message, 2000);
 
   if (!subTrack || !TRACKS[lane].includes(subTrack)) return null;
-  if (!fullName || fullName.length < 1) return null;
-  if (!company || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
+  if (!fullName || fullName.length < 1 || !company || !email) return null;
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return null;
   if (website === null || teamSize === null || preferredSession === null || message === null) return null;
-  if (!TEAM_SIZES.includes(teamSize)) return null;
-  if (lane !== "training" && teamSize !== "") return null;
+  if (!TEAM_SIZES.includes(teamSize) || (lane !== "training" && teamSize !== "")) return null;
 
   let normalizedWebsite = "";
   if (lane === "founder" && website) {
     try {
-      const parsed = new URL(/^https?:\/\//i.test(website) ? website : `https://${website}`);
+      const parsed = new URL(/^https?:\\/\\//i.test(website) ? website : `https://${website}`);
       if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
       normalizedWebsite = parsed.toString().slice(0, 300);
     } catch {
       return null;
     }
   }
-
-  return {
-    lane,
-    subTrack,
-    fullName,
-    company,
-    email,
-    website: normalizedWebsite,
-    teamSize: lane === "training" ? teamSize : "",
-    preferredSession,
-    message,
-  };
+  return { lane, subTrack, fullName, company, email, website: normalizedWebsite,
+    teamSize: lane === "training" ? teamSize : "", preferredSession, message };
 }

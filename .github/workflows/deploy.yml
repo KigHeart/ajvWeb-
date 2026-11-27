@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Setup Java for Firestore Emulator
+      - name: Setup Java for legacy Firestore rules tests
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -33,10 +33,10 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Type-check
         run: npm run lint
-      - name: Firestore security rules tests (legacy Firebase during migration)
+      - name: Legacy Firestore security rules tests
         run: npm run test:rules
-      - name: Cloudflare API validation tests
-        run: npm run test:api
+      - name: Self-hosted backend tests
+        run: npm run test:server
       - name: Build site
         run: npm run build
 
