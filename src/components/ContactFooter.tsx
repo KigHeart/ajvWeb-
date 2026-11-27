@@ -25,7 +25,8 @@ export function ContactFooter({
                 Building, training, or partnering in agentic AI?
               </h2>
               <p className="text-sm sm:text-base text-[#43585D]">
-                Reach out regarding investment, incubation, SME executive training, or partnerships.
+                Reach out regarding workflow discovery, investment, incubation, executive training,
+                or partnerships.
               </p>
             </div>
 
@@ -56,6 +57,9 @@ export function ContactFooter({
               </a>
               <a href="#approach" className="hover:text-[#0B2228] transition-colors">
                 Approach
+              </a>
+              <a href="#research" className="hover:text-[#0B2228] transition-colors">
+                Research
               </a>
               <button
                 type="button"

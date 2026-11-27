@@ -9,6 +9,12 @@ interface FundISectionProps {
 
 const APPROACH_SLIDES = [
   {
+    id: 'workflow-discovery',
+    kicker: 'Workflow Discovery',
+    headline: 'Inside real operations, before software.',
+    body: 'We examine how people, tasks, and payments actually move inside organisations—uncovering repeatable bottlenecks that can grow into independent agentic AI companies.',
+  },
+  {
     id: 'sme-gap',
     kicker: 'Underserved SMEs',
     headline: 'Automating everyday enterprise work.',
@@ -34,8 +40,13 @@ const ECOSYSTEM_NODES: {
   preset: InquiryPreset;
 }[] = [
   {
+    title: 'Organisations',
+    role: 'Operational workflow discovery and design-partner pilots',
+    preset: { lane: 'partner', partnerType: 'discovery' },
+  },
+  {
     title: 'Founders & Builders',
-    role: 'Capital and demand-backed incubation',
+    role: 'Capital and demand-backed venture incubation',
     preset: { lane: 'founder', founderTrack: 'incubation' },
   },
   {
@@ -44,14 +55,9 @@ const ECOSYSTEM_NODES: {
     preset: { lane: 'training', trainingFocus: 'governance' },
   },
   {
-    title: 'Commercial Banks',
-    role: 'Regulated sandbox pilots and underwriting',
+    title: 'Banks & Model Labs',
+    role: 'Regulated sandboxes and pooled inference credits',
     preset: { lane: 'partner', partnerType: 'bank' },
-  },
-  {
-    title: 'AI Model Providers',
-    role: 'Pooled compute credits and SME distribution',
-    preset: { lane: 'partner', partnerType: 'model-provider' },
   },
 ];
 

@@ -1,54 +1,56 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
 import {
+  ArrowUpRight,
   Check,
   Download,
   ExternalLink,
+  KeyRound,
   LogOut,
   Mail,
   Send,
-  ShieldAlert,
   Trash2,
   UserPlus,
   X,
 } from 'lucide-react';
 import type { InquiryLane } from '../data/memorandum';
+import { getPortalUser, type PortalUser } from '../lib/authSession';
 import {
-  ADMIN_OWNER_EMAIL,
-  auth,
-  googleProvider,
-  isOwnerEmail,
-  PAYLOAD_LIMITS,
-  sanitizeWebsiteUrl,
-} from '../lib/firebase';
-import {
-  addAdminInvite,
-  checkAdminAccess,
+  addTeamMember,
+  claimPortalPassword,
   DEFAULT_SITE_CONFIG,
   deleteInquiry,
   exportInquiriesToCsv,
+  fetchAdminHealth,
+  fetchAuthStatus,
+  fetchInquiries,
   fetchSiteConfig,
-  removeAdminInvite,
+  fetchTeamMembers,
+  loginPortal,
+  logoutPortal,
+  removeTeamMember,
   saveSiteConfig,
-  subscribeToAdminInvites,
-  subscribeToInquiries,
   updateInquiryTriage,
-  type AdminInviteRecord,
+  type AdminHealthStatus,
+  type AuthStatus,
   type IncubationStatus,
   type InquiryRecord,
   type InquiryStatus,
   type SiteConfig,
   type StageTag,
+  type TeamMemberRecord,
 } from '../lib/inquiries';
-import { DiscoveryWorkspace } from './DiscoveryWorkspace';
+import { ADMIN_OWNER_EMAIL, PAYLOAD_LIMITS, sanitizeWebsiteUrl } from '../lib/validation';
+import { DiscoveryWorkspace, type DiscoveryOrgPrefill } from './DiscoveryWorkspace';
+import { ResearchPortalTab } from './ResearchPortalTab';
 
 interface AdminPortalModalProps {
   open: boolean;
   onClose: () => void;
   onSiteConfigUpdated?: (config: SiteConfig) => void;
+  onResearchUpdated?: () => void;
 }
 
-type PortalTab = 'inbox' | 'discovery' | 'site' | 'team';
+type PortalTab = 'inbox' | 'discovery' | 'research' | 'site' | 'team';
 
 const LANE_LABELS: Record<InquiryLane, string> = {
   founder: 'Founders',
@@ -107,12 +109,19 @@ export function AdminPortalModal({
   open,
   onClose,
   onSiteConfigUpdated,
+  onResearchUpdated,
 }: AdminPortalModalProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checkingRole, setCheckingRole] = useState(false);
+  const [user, setUser] = useState<PortalUser | null>(() => getPortalUser());
+  const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
+  const [loadingAuthStatus, setLoadingAuthStatus] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [submittingAuth, setSubmittingAuth] = useState(false);
+
+  // Claim / login inputs
+  const [claimName, setClaimName] = useState('Ajentir Owner');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [activeTab, setActiveTab] = useState<PortalTab>('inbox');
 
@@ -137,75 +146,59 @@ export function AdminPortalModal({
   const [configSaved, setConfigSaved] = useState(false);
   const [configError, setConfigError] = useState('');
 
-  // Team invitation state
-  const [invites, setInvites] = useState<AdminInviteRecord[]>([]);
+  // Team & health state
+  const [teamMembers, setTeamMembers] = useState<TeamMemberRecord[]>([]);
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
+  const [invitePassword, setInvitePassword] = useState('');
   const [inviteError, setInviteError] = useState('');
   const [addingInvite, setAddingInvite] = useState(false);
+  const [orgPrefill, setOrgPrefill] = useState<DiscoveryOrgPrefill | null>(null);
+  const [adminHealth, setAdminHealth] = useState<AdminHealthStatus | null>(null);
 
-  const isOwner = isOwnerEmail(user?.email);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
-      setUser(nextUser);
-      setAuthReady(true);
-      setAuthError('');
-      setDataError('');
-
-      if (!nextUser) {
-        setIsAdmin(false);
-        setInquiries([]);
-        setInvites([]);
-        return;
-      }
-
-      setCheckingRole(true);
-      const allowed = await checkAdminAccess(
-        nextUser.uid,
-        nextUser.email,
-        nextUser.emailVerified,
-      );
-      setIsAdmin(allowed);
-      setCheckingRole(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const isOwner = user?.role === 'owner';
+  const isStaticPages =
+    typeof window !== 'undefined' && window.location.hostname.endsWith('.github.io');
 
   useEffect(() => {
-    if (!open || !authReady || !user || !isAdmin) {
-      return;
-    }
+    if (!open || user) return;
+    setLoadingAuthStatus(true);
+    setAuthError('');
+    void fetchAuthStatus()
+      .then((status) => setAuthStatus(status))
+      .catch((err) =>
+        setAuthError(err instanceof Error ? err.message : 'Unable to check portal status.'),
+      )
+      .finally(() => setLoadingAuthStatus(false));
+  }, [open, user]);
 
+  const loadPortalData = async (currentUser: PortalUser) => {
     setLoadingInquiries(true);
     setDataError('');
-
-    const unsubscribeInquiries = subscribeToInquiries(
-      (items) => {
-        setInquiries(items);
-        setLoadingInquiries(false);
-      },
-      () => {
-        setLoadingInquiries(false);
-        setDataError('Unable to load inquiries. Check your account permissions.');
-      },
-    );
-
-    void fetchSiteConfig().then(setSiteConfig);
-    let unsubscribeInvites = () => {};
-    if (isOwner) {
-      unsubscribeInvites = subscribeToAdminInvites(
-        (items) => setInvites(items),
-        () => undefined,
-      );
+    try {
+      const [inqItems, cfg, health] = await Promise.all([
+        fetchInquiries(),
+        fetchSiteConfig(),
+        fetchAdminHealth(),
+      ]);
+      setInquiries(inqItems);
+      setSiteConfig(cfg);
+      setAdminHealth(health);
+      if (currentUser.role === 'owner') {
+        const members = await fetchTeamMembers();
+        setTeamMembers(members);
+      }
+    } catch (err) {
+      setDataError(err instanceof Error ? err.message : 'Unable to load portal data.');
+    } finally {
+      setLoadingInquiries(false);
     }
+  };
 
-    return () => {
-      unsubscribeInquiries();
-      unsubscribeInvites();
-    };
-  }, [open, authReady, user, isAdmin, isOwner]);
+  useEffect(() => {
+    if (!open || !user) return;
+    void loadPortalData(user);
+  }, [open, user]);
 
   const filteredInquiries = useMemo(() => {
     return inquiries.filter((item) => {
@@ -232,20 +225,66 @@ export function AdminPortalModal({
 
   if (!open) return null;
 
-  const handleSignIn = async () => {
+  const needsInitialClaim =
+    Boolean(authStatus) && !authStatus?.envPasscodeConfigured && !authStatus?.ownerClaimed;
+
+  const handleClaimPassword = async (e: FormEvent) => {
+    e.preventDefault();
     setAuthError('');
+    if (password.length < 8) {
+      setAuthError('Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setAuthError('Passwords do not match.');
+      return;
+    }
+    setSubmittingAuth(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const nextUser = await claimPortalPassword({
+        displayName: claimName.trim() || 'Ajentir Owner',
+        email: (loginEmail.trim() || authStatus?.ownerEmailHint || ADMIN_OWNER_EMAIL).toLowerCase(),
+        password,
+      });
+      setPassword('');
+      setConfirmPassword('');
+      setUser(nextUser);
     } catch (err) {
-      setAuthError(
-        err instanceof Error ? err.message : 'Sign-in was cancelled or blocked by the browser.',
-      );
+      setAuthError(err instanceof Error ? err.message : 'Unable to set password.');
+    } finally {
+      setSubmittingAuth(false);
     }
   };
 
-  const handleSignOut = async () => {
+  const handleLogin = async (e: FormEvent) => {
+    e.preventDefault();
     setAuthError('');
-    await signOut(auth);
+    if (!password) {
+      setAuthError('Please enter your password.');
+      return;
+    }
+    setSubmittingAuth(true);
+    try {
+      const nextUser = await loginPortal({
+        email: loginEmail.trim() || undefined,
+        password,
+      });
+      setPassword('');
+      setUser(nextUser);
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Sign-in failed.');
+    } finally {
+      setSubmittingAuth(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    logoutPortal();
+    setUser(null);
+    setInquiries([]);
+    setTeamMembers([]);
+    setAdminHealth(null);
+    setAuthError('');
   };
 
   const handleSaveTriage = async () => {
@@ -260,6 +299,8 @@ export function AdminPortalModal({
         designPartner: draftDesignPartner,
         notes: draftNotes,
       });
+      const updated = await fetchInquiries();
+      setInquiries(updated);
       setSavedNotice(true);
     } catch {
       setDataError('Failed to save changes.');
@@ -276,6 +317,8 @@ export function AdminPortalModal({
       if (selectedId === id) {
         setSelectedId(null);
       }
+      const updated = await fetchInquiries();
+      setInquiries(updated);
     } catch {
       setDataError('Failed to delete inquiry.');
     }
@@ -297,21 +340,33 @@ export function AdminPortalModal({
     }
   };
 
-  const handleAddInvite = async (e: FormEvent) => {
+  const handleAddTeamMember = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user?.email) return;
     setInviteError('');
     setAddingInvite(true);
     try {
-      await addAdminInvite(inviteEmail, inviteName, user.email);
+      const created = await addTeamMember({
+        email: inviteEmail,
+        displayName: inviteName,
+        password: invitePassword,
+      });
+      setTeamMembers((prev) => [created, ...prev]);
       setInviteEmail('');
       setInviteName('');
+      setInvitePassword('');
     } catch (err) {
-      setInviteError(
-        err instanceof Error ? err.message : 'Unable to add team member.',
-      );
+      setInviteError(err instanceof Error ? err.message : 'Unable to add team member.');
     } finally {
       setAddingInvite(false);
+    }
+  };
+
+  const handleRemoveTeamMember = async (id: string) => {
+    try {
+      await removeTeamMember(id);
+      setTeamMembers((prev) => prev.filter((m) => m.id !== id));
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : 'Unable to remove team member.');
     }
   };
 
@@ -349,11 +404,12 @@ export function AdminPortalModal({
           </div>
 
           <div className="flex items-center gap-2.5">
-            {user && isAdmin && (
+            {user && (
               <div className="hidden sm:flex gap-1 p-1 neu-pressed rounded-xl mr-1">
                 {[
                   { id: 'inbox', label: 'Inbox' },
                   { id: 'discovery', label: 'Discovery OS' },
+                  { id: 'research', label: 'Research' },
                   { id: 'site', label: 'Site Updates' },
                   { id: 'team', label: 'Team & Alerts' },
                 ].map((t) => (
@@ -361,7 +417,7 @@ export function AdminPortalModal({
                     key={t.id}
                     type="button"
                     onClick={() => setActiveTab(t.id as PortalTab)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                       activeTab === t.id
                         ? 'neu-raised-sm text-[#0B2228]'
                         : 'text-[#43585D] hover:text-[#0B2228]'
@@ -377,7 +433,7 @@ export function AdminPortalModal({
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#43585D] hover:text-[#0B2228] neu-raised-sm rounded-xl transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#43585D] hover:text-[#0B2228] neu-raised-sm rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Sign Out</span>
@@ -394,11 +450,12 @@ export function AdminPortalModal({
           </div>
         </div>
 
-        {user && isAdmin && (
+        {user && (
           <div className="flex sm:hidden gap-1 p-1 neu-pressed rounded-xl mt-4 shrink-0 overflow-x-auto">
             {[
               { id: 'inbox', label: 'Inbox' },
               { id: 'discovery', label: 'Discovery OS' },
+              { id: 'research', label: 'Research' },
               { id: 'site', label: 'Site' },
               { id: 'team', label: 'Team' },
             ].map((t) => (
@@ -406,7 +463,7 @@ export function AdminPortalModal({
                 key={t.id}
                 type="button"
                 onClick={() => setActiveTab(t.id as PortalTab)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                   activeTab === t.id
                     ? 'neu-raised-sm text-[#0B2228]'
                     : 'text-[#43585D] hover:text-[#0B2228]'
@@ -419,47 +476,171 @@ export function AdminPortalModal({
         )}
 
         <div className="flex-1 overflow-y-auto pt-5">
-          {!authReady || checkingRole ? (
-            <div className="py-12 text-center text-sm text-[#43585D]">
-              Checking team access...
-            </div>
-          ) : !user ? (
-            <div className="max-w-md mx-auto py-8 text-center space-y-5">
-              <p className="text-sm text-[#43585D] leading-relaxed">
-                Sign in with an authorized Ajentir Ventures Google account to review inbound
-                inquiries, manage live cohort dates, and administer team access.
-              </p>
-              {authError && (
-                <p role="alert" className="text-xs font-medium text-[#9A3412]">
-                  {authError}
+          {!user ? (
+            isStaticPages ? (
+              <div className="max-w-md mx-auto py-8 text-center space-y-3">
+                <KeyRound className="w-7 h-7 text-[#0B5563] mx-auto" aria-hidden="true" />
+                <h4 className="font-display text-lg font-semibold text-[#0B2228]">
+                  Server Hosting Required for Team Portal
+                </h4>
+                <p className="text-sm text-[#43585D] leading-relaxed">
+                  You are viewing the static GitHub Pages mirror. Open your AI Studio or self-hosted
+                  server URL to access the SQLite database and Team Portal.
                 </p>
-              )}
-              <button
-                type="button"
-                onClick={handleSignIn}
-                className="px-6 py-3 text-xs font-semibold text-white neu-btn-teal rounded-xl transition-all cursor-pointer"
+              </div>
+            ) : loadingAuthStatus ? (
+              <div className="py-12 text-center text-sm text-[#43585D]">
+                Checking portal status...
+              </div>
+            ) : needsInitialClaim ? (
+              <form
+                onSubmit={handleClaimPassword}
+                className="max-w-md mx-auto py-4 space-y-4 neu-pressed rounded-2xl p-6"
               >
-                Sign in with Google
-              </button>
-            </div>
-          ) : !isAdmin ? (
-            <div className="max-w-md mx-auto py-8 text-center space-y-4">
-              <ShieldAlert className="w-8 h-8 text-[#9A3412] mx-auto" aria-hidden="true" />
-              <h4 className="font-display text-lg font-semibold text-[#0B2228]">
-                Access Restricted
-              </h4>
-              <p className="text-sm text-[#43585D] leading-relaxed">
-                Signed in as <span className="font-medium text-[#0B2228]">{user.email}</span>.
-                This account does not have Ajentir Ventures admin access.
-              </p>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="px-5 py-2.5 text-xs font-semibold text-[#0B2228] neu-raised-sm rounded-xl cursor-pointer"
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-[#0B5563]">
+                    <KeyRound className="w-4 h-4" aria-hidden="true" />
+                    <span className="text-xs font-semibold">First-Run Setup · No MFA Required</span>
+                  </div>
+                  <h4 className="font-display text-xl font-semibold text-[#0B2228]">
+                    Set Team Portal Password
+                  </h4>
+                  <p className="text-xs text-[#43585D] leading-relaxed">
+                    Create your owner password to protect the SQLite Inquiry Inbox and Discovery OS.
+                    You can override this anytime via <span className="font-mono">ADMIN_PASSWORD</span>.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#0B2228] mb-1">
+                    Owner Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={claimName}
+                    onChange={(e) => setClaimName(e.target.value)}
+                    className="w-full px-3.5 py-2 text-sm bg-white/80 rounded-xl text-[#0B2228] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#0B2228] mb-1">
+                    Owner Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={loginEmail || authStatus?.ownerEmailHint || ADMIN_OWNER_EMAIL}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className="w-full px-3.5 py-2 text-sm bg-white/80 rounded-xl text-[#0B2228] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#0B2228] mb-1">
+                    Password (min 8 characters)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Choose a strong password"
+                    className="w-full px-3.5 py-2 text-sm bg-white/80 rounded-xl text-[#0B2228] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#0B2228] mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat password"
+                    className="w-full px-3.5 py-2 text-sm bg-white/80 rounded-xl text-[#0B2228] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
+
+                {authError && (
+                  <p role="alert" className="text-xs font-medium text-[#9A3412]">
+                    {authError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submittingAuth}
+                  className="w-full py-3 text-xs font-semibold text-white neu-btn-teal rounded-xl disabled:opacity-60 cursor-pointer"
+                >
+                  {submittingAuth ? 'Securing Portal...' : 'Save Password & Enter Portal'}
+                </button>
+              </form>
+            ) : (
+              <form
+                onSubmit={handleLogin}
+                className="max-w-md mx-auto py-4 space-y-4 neu-pressed rounded-2xl p-6"
               >
-                Switch Account
-              </button>
-            </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-[#0B5563]">
+                    <KeyRound className="w-4 h-4" aria-hidden="true" />
+                    <span className="text-xs font-semibold">Direct Team Sign-In</span>
+                  </div>
+                  <h4 className="font-display text-xl font-semibold text-[#0B2228]">
+                    Sign in to Ajentir Portal
+                  </h4>
+                  <p className="text-xs text-[#43585D] leading-relaxed">
+                    Enter your portal password (and email if signing in with a team member account).
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#0B2228] mb-1">
+                    Email (optional for primary owner)
+                  </label>
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder={authStatus?.ownerEmailHint || ADMIN_OWNER_EMAIL}
+                    className="w-full px-3.5 py-2 text-sm bg-white/80 rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#0B2228] mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter portal password"
+                    className="w-full px-3.5 py-2 text-sm bg-white/80 rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
+                  />
+                </div>
+
+                {authError && (
+                  <p role="alert" className="text-xs font-medium text-[#9A3412]">
+                    {authError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submittingAuth}
+                  className="w-full py-3 text-xs font-semibold text-white neu-btn-teal rounded-xl disabled:opacity-60 cursor-pointer"
+                >
+                  {submittingAuth ? 'Signing in...' : 'Sign In'}
+                </button>
+              </form>
+            )
           ) : activeTab === 'inbox' ? (
             <div className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -471,7 +652,7 @@ export function AdminPortalModal({
                         key={tab}
                         type="button"
                         onClick={() => setLaneFilter(tab)}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                           active
                             ? 'neu-raised-sm text-[#0B2228]'
                             : 'text-[#43585D] hover:text-[#0B2228]'
@@ -492,7 +673,7 @@ export function AdminPortalModal({
                           key={st}
                           type="button"
                           onClick={() => setStatusFilter(st)}
-                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all capitalize cursor-pointer ${
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all capitalize whitespace-nowrap shrink-0 cursor-pointer ${
                             active
                               ? 'neu-raised-sm text-[#0B5563]'
                               : 'text-[#43585D] hover:text-[#0B2228]'
@@ -508,7 +689,7 @@ export function AdminPortalModal({
                     type="button"
                     disabled={filteredInquiries.length === 0}
                     onClick={() => exportInquiriesToCsv(filteredInquiries)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0B2228] neu-raised-sm rounded-xl hover:text-[#0B5563] disabled:opacity-45 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0B2228] neu-raised-sm rounded-xl hover:text-[#0B5563] disabled:opacity-45 whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Export CSV</span>
@@ -558,7 +739,7 @@ export function AdminPortalModal({
                             {item.company || 'Independent'} · {LANE_LABELS[item.lane]}
                             {item.stageTag ? ` · ${item.stageTag}` : ''}
                           </p>
-                          <p className="text-[11px] text-[#7E9094] mt-1">
+                          <p className="text-[11px] text-[#7E9094] mt-1 tabular-nums">
                             {formatTimestamp(item.createdAt)}
                           </p>
                         </button>
@@ -583,7 +764,7 @@ export function AdminPortalModal({
                           </p>
                         </div>
 
-                        <span className="text-[11px] font-mono text-[#7E9094]">
+                        <span className="text-[11px] font-mono tabular-nums text-[#7E9094]">
                           {formatTimestamp(selectedItem.createdAt)}
                         </span>
                       </div>
@@ -596,6 +777,23 @@ export function AdminPortalModal({
                           <Send className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Quick Reply</span>
                         </a>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOrgPrefill({
+                              key: Date.now(),
+                              name: selectedItem.company || selectedItem.fullName,
+                              workflowOwners: `${selectedItem.fullName} (${selectedItem.email})`,
+                              workflowsSummary: selectedItem.message,
+                            });
+                            setActiveTab('discovery');
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 neu-raised-sm rounded-lg font-medium text-[#0B2228] hover:text-[#0B5563] cursor-pointer"
+                        >
+                          <ArrowUpRight className="w-3.5 h-3.5 text-[#B5862A]" aria-hidden="true" />
+                          <span>Promote to Discovery OS</span>
+                        </button>
 
                         <a
                           href={`mailto:${selectedItem.email}`}
@@ -775,7 +973,12 @@ export function AdminPortalModal({
               )}
             </div>
           ) : activeTab === 'discovery' ? (
-            <DiscoveryWorkspace />
+            <DiscoveryWorkspace
+              orgPrefill={orgPrefill}
+              onPrefillConsumed={() => setOrgPrefill(null)}
+            />
+          ) : activeTab === 'research' ? (
+            <ResearchPortalTab onResearchUpdated={onResearchUpdated} />
           ) : activeTab === 'site' ? (
             <form onSubmit={handleSaveSiteConfig} className="max-w-2xl space-y-5">
               <div>
@@ -783,8 +986,8 @@ export function AdminPortalModal({
                   Live Cohort &amp; Briefing Status
                 </h4>
                 <p className="text-xs text-[#43585D] mt-1">
-                  Updates here appear immediately inside the What We Do brief modals without a code
-                  redeploy.
+                  Updates here are stored in SQLite and appear immediately inside the What We Do
+                  brief modals.
                 </p>
               </div>
 
@@ -883,35 +1086,49 @@ export function AdminPortalModal({
               <div className="lg:col-span-7 space-y-4">
                 <div>
                   <h4 className="font-display text-lg font-semibold text-[#0B2228]">
-                    Portal Team Access
+                    Portal Team Accounts (Password Login · Zero MFA)
                   </h4>
                   <p className="text-xs text-[#43585D] mt-1">
-                    Primary owner: <span className="font-medium text-[#0B2228]">{ADMIN_OWNER_EMAIL}</span>
+                    Signed in as <span className="font-medium text-[#0B2228]">{user.email}</span>
                   </p>
                 </div>
 
                 {isOwner ? (
                   <>
-                    <form onSubmit={handleAddInvite} className="neu-pressed rounded-2xl p-4 space-y-3">
+                    <form
+                      onSubmit={handleAddTeamMember}
+                      className="neu-pressed rounded-2xl p-4 space-y-3"
+                    >
                       <span className="block text-xs font-semibold text-[#0B2228]">
-                        Authorize Team Member (Google Email)
+                        Create Team Member Account
                       </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         <input
                           type="text"
+                          required
                           value={inviteName}
                           maxLength={PAYLOAD_LIMITS.fullNameMax}
                           onChange={(e) => setInviteName(e.target.value)}
                           placeholder="Colleague name"
-                          className="w-full px-3.5 py-2 text-xs bg-white/75 rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
+                          className="w-full px-3 py-2 text-xs bg-white/75 rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
                         />
                         <input
                           type="email"
+                          required
                           value={inviteEmail}
                           maxLength={PAYLOAD_LIMITS.emailMax}
                           onChange={(e) => setInviteEmail(e.target.value)}
                           placeholder="colleague@ajentir.com"
-                          className="w-full px-3.5 py-2 text-xs bg-white/75 rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
+                          className="w-full px-3 py-2 text-xs bg-white/75 rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
+                        />
+                        <input
+                          type="password"
+                          required
+                          minLength={8}
+                          value={invitePassword}
+                          onChange={(e) => setInvitePassword(e.target.value)}
+                          placeholder="Password (min 8 chars)"
+                          className="w-full px-3 py-2 text-xs bg-white/75 rounded-xl text-[#0B2228] placeholder:text-[#7E9094] focus:outline-2 focus:outline-[#0B5563]"
                         />
                       </div>
                       {inviteError && (
@@ -925,30 +1142,30 @@ export function AdminPortalModal({
                         className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white neu-btn-teal rounded-xl disabled:opacity-60 cursor-pointer"
                       >
                         <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{addingInvite ? 'Adding...' : 'Grant Access'}</span>
+                        <span>{addingInvite ? 'Adding...' : 'Create Account'}</span>
                       </button>
                     </form>
 
                     <div className="space-y-2">
-                      {invites.length === 0 ? (
+                      {teamMembers.length === 0 ? (
                         <p className="text-xs text-[#43585D]">
-                          No additional team members authorized yet.
+                          No additional team member accounts created yet.
                         </p>
                       ) : (
-                        invites.map((inv) => (
+                        teamMembers.map((member) => (
                           <div
-                            key={inv.email}
+                            key={member.id}
                             className="neu-raised-sm rounded-xl px-4 py-3 flex items-center justify-between gap-3"
                           >
                             <div className="min-w-0">
                               <p className="text-xs font-semibold text-[#0B2228] truncate">
-                                {inv.displayName}
+                                {member.displayName}
                               </p>
-                              <p className="text-[11px] text-[#43585D] truncate">{inv.email}</p>
+                              <p className="text-[11px] text-[#43585D] truncate">{member.email}</p>
                             </div>
                             <button
                               type="button"
-                              onClick={() => void removeAdminInvite(inv.email)}
+                              onClick={() => void handleRemoveTeamMember(member.id)}
                               className="text-xs font-medium text-[#9A3412] hover:underline shrink-0 cursor-pointer"
                             >
                               Revoke
@@ -960,7 +1177,7 @@ export function AdminPortalModal({
                   </>
                 ) : (
                   <p className="text-xs text-[#43585D]">
-                    Only the account owner ({ADMIN_OWNER_EMAIL}) can add or revoke team members.
+                    Only the account owner can create or revoke team member accounts.
                   </p>
                 )}
               </div>
@@ -968,13 +1185,35 @@ export function AdminPortalModal({
               <div className="lg:col-span-5">
                 <div className="neu-pressed rounded-2xl p-5 space-y-3">
                   <h4 className="font-display text-sm font-semibold text-[#0B2228]">
-                    Notification Delivery
+                    Database &amp; Alert Delivery
                   </h4>
-                  <p className="text-xs text-[#43585D] leading-relaxed">
-                    Email and webhook delivery are intentionally disabled. Inquiries are stored
-                    directly in Firestore. A trusted server-side event handler must be deployed
-                    and tested before notifications are enabled.
-                  </p>
+                  <div className="space-y-2 text-xs text-[#43585D] leading-relaxed">
+                    <p>
+                      Primary storage:{' '}
+                      <span className="font-semibold text-[#0B2228]">
+                        SQLite ({adminHealth?.database ?? 'sqlite'})
+                      </span>
+                    </p>
+                    <p>
+                      Email alerts (Resend):{' '}
+                      <span className="font-semibold text-[#0B2228]">
+                        {adminHealth?.emailAlertsConfigured ? 'Active' : 'Not configured'}
+                      </span>
+                    </p>
+                    <p>
+                      Webhook alerts:{' '}
+                      <span className="font-semibold text-[#0B2228]">
+                        {adminHealth?.webhookAlertsConfigured ? 'Active' : 'Not configured'}
+                      </span>
+                    </p>
+                    <p className="text-[11px]">
+                      Configure <span className="font-mono">ADMIN_PASSWORD</span>,{' '}
+                      <span className="font-mono">RESEND_API_KEY</span>,{' '}
+                      <span className="font-mono">ALERT_TO_EMAIL</span>, and{' '}
+                      <span className="font-mono">ALERT_WEBHOOK_URL</span> in AI Studio Settings →
+                      Secrets / Environment Variables.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

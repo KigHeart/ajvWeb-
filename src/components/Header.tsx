@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { id: 'what-we-do', label: 'What We Do', href: '#what-we-do' },
   { id: 'focus', label: 'Focus', href: '#focus' },
   { id: 'approach', label: 'Approach', href: '#approach' },
+  { id: 'research', label: 'Research', href: '#research' },
 ];
 
 export function Header({ onOpenInquiry }: HeaderProps) {

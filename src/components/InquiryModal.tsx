@@ -7,7 +7,7 @@ import type {
   PartnerType,
   TrainingFocus,
 } from '../data/memorandum';
-import { EMAIL_PATTERN, PAYLOAD_LIMITS } from '../lib/firebase';
+import { EMAIL_PATTERN, PAYLOAD_LIMITS } from '../lib/validation';
 import { submitInquiry, type InquirySubTrack, type TeamSizeOption } from '../lib/inquiries';
 
 interface InquiryModalProps {

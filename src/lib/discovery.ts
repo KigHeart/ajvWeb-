@@ -1,17 +1,4 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  Timestamp,
-  updateDoc,
-  type Unsubscribe,
-} from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from './firebase';
+import { authHeaders } from './authSession';
 
 export type DiscoverySector =
   | 'Financial services'
@@ -137,11 +124,10 @@ export const SCORECARD_CRITERIA: {
   { key: 'scoreFit', label: 'Strategic fit with Ajentir', max: 10 },
 ];
 
-const ORGS_PATH = 'discovery_orgs';
-const OPPS_PATH = 'venture_opportunities';
-
-function toDate(value: unknown): Date | null {
-  return value instanceof Timestamp ? value.toDate() : null;
+function parseIsoDate(value: unknown): Date | null {
+  if (typeof value !== 'string' || !value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function clampInt(val: number, max: number): number {
@@ -196,39 +182,24 @@ export function getScoreThresholdLabel(
   };
 }
 
-export function subscribeToDiscoveryOrgs(
-  onData: (items: DiscoveryOrgRecord[]) => void,
-  onError: (err: Error) => void,
-): Unsubscribe {
-  const q = query(collection(db, ORGS_PATH), orderBy('updatedAt', 'desc'));
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      const items: DiscoveryOrgRecord[] = snapshot.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          name: typeof data.name === 'string' ? data.name : '',
-          sector: (data.sector as DiscoverySector) ?? 'Financial services',
-          size: typeof data.size === 'string' ? data.size : '',
-          operatingModel: typeof data.operatingModel === 'string' ? data.operatingModel : '',
-          workflowOwners: typeof data.workflowOwners === 'string' ? data.workflowOwners : '',
-          workflowsSummary: typeof data.workflowsSummary === 'string' ? data.workflowsSummary : '',
-          status: (data.status as DiscoveryOrgStatus) ?? 'Access',
-          createdAt: toDate(data.createdAt),
-          updatedAt: toDate(data.updatedAt),
-        };
-      });
-      onData(items);
-    },
-    (error) => {
-      try {
-        handleFirestoreError(error, OperationType.LIST, ORGS_PATH);
-      } catch (wrapped) {
-        onError(wrapped instanceof Error ? wrapped : new Error(String(wrapped)));
+export async function fetchDiscoveryOrgs(): Promise<DiscoveryOrgRecord[]> {
+  const res = await fetch('/api/discovery/orgs', { headers: authHeaders() });
+  if (!res.ok) {
+    throw new Error('Unable to load discovery organisations.');
+  }
+  const data = (await res.json()) as {
+    items: Array<
+      Omit<DiscoveryOrgRecord, 'createdAt' | 'updatedAt'> & {
+        createdAt: string;
+        updatedAt: string;
       }
-    },
-  );
+    >;
+  };
+  return (data.items ?? []).map((item) => ({
+    ...item,
+    createdAt: parseIsoDate(item.createdAt),
+    updatedAt: parseIsoDate(item.updatedAt),
+  }));
 }
 
 export async function saveDiscoveryOrg(
@@ -242,7 +213,6 @@ export async function saveDiscoveryOrg(
     workflowOwners: input.workflowOwners.trim().slice(0, 200),
     workflowsSummary: input.workflowsSummary.trim().slice(0, 3000),
     status: input.status,
-    updatedAt: serverTimestamp(),
   };
 
   if (!payload.name) {
@@ -250,79 +220,51 @@ export async function saveDiscoveryOrg(
   }
 
   if (input.id) {
-    try {
-      await updateDoc(doc(db, ORGS_PATH, input.id), payload);
-      return input.id;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `${ORGS_PATH}/${input.id}`);
-    }
+    const res = await fetch(`/api/discovery/orgs/${encodeURIComponent(input.id)}`, {
+      method: 'PUT',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Unable to update organisation.');
+    return input.id;
   }
 
-  try {
-    const ref = await addDoc(collection(db, ORGS_PATH), {
-      ...payload,
-      createdAt: serverTimestamp(),
-    });
-    return ref.id;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, ORGS_PATH);
-  }
+  const res = await fetch('/api/discovery/orgs', {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Unable to save organisation.');
+  const data = (await res.json()) as { item: { id: string } };
+  return data.item.id;
 }
 
 export async function deleteDiscoveryOrg(orgId: string): Promise<void> {
-  try {
-    await deleteDoc(doc(db, ORGS_PATH, orgId));
-  } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `${ORGS_PATH}/${orgId}`);
-  }
+  const res = await fetch(`/api/discovery/orgs/${encodeURIComponent(orgId)}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error('Unable to remove organisation.');
 }
 
-export function subscribeToVentureOpportunities(
-  onData: (items: VentureOpportunityRecord[]) => void,
-  onError: (err: Error) => void,
-): Unsubscribe {
-  const q = query(collection(db, OPPS_PATH), orderBy('updatedAt', 'desc'));
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      const items: VentureOpportunityRecord[] = snapshot.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          title: typeof data.title === 'string' ? data.title : '',
-          orgId: typeof data.orgId === 'string' ? data.orgId : '',
-          orgName: typeof data.orgName === 'string' ? data.orgName : '',
-          category: (data.category as OpportunityCategory) ?? 'C — New venture',
-          intervention: (data.intervention as WorkflowIntervention) ?? 'Reconstruct',
-          problemSummary: typeof data.problemSummary === 'string' ? data.problemSummary : '',
-          validationEvidence:
-            typeof data.validationEvidence === 'string' ? data.validationEvidence : '',
-          hasPaidDemandEvidence: Boolean(data.hasPaidDemandEvidence),
-          scoreSeverity: typeof data.scoreSeverity === 'number' ? data.scoreSeverity : 0,
-          scoreRepeatability:
-            typeof data.scoreRepeatability === 'number' ? data.scoreRepeatability : 0,
-          scoreWtp: typeof data.scoreWtp === 'number' ? data.scoreWtp : 0,
-          scoreAgentic: typeof data.scoreAgentic === 'number' ? data.scoreAgentic : 0,
-          scoreScalability:
-            typeof data.scoreScalability === 'number' ? data.scoreScalability : 0,
-          scoreFeasibility:
-            typeof data.scoreFeasibility === 'number' ? data.scoreFeasibility : 0,
-          scoreFit: typeof data.scoreFit === 'number' ? data.scoreFit : 0,
-          pipelineStage: (data.pipelineStage as PipelineStage) ?? 'Investigate',
-          createdAt: toDate(data.createdAt),
-          updatedAt: toDate(data.updatedAt),
-        };
-      });
-      onData(items);
-    },
-    (error) => {
-      try {
-        handleFirestoreError(error, OperationType.LIST, OPPS_PATH);
-      } catch (wrapped) {
-        onError(wrapped instanceof Error ? wrapped : new Error(String(wrapped)));
+export async function fetchVentureOpportunities(): Promise<VentureOpportunityRecord[]> {
+  const res = await fetch('/api/discovery/opportunities', { headers: authHeaders() });
+  if (!res.ok) {
+    throw new Error('Unable to load venture opportunities.');
+  }
+  const data = (await res.json()) as {
+    items: Array<
+      Omit<VentureOpportunityRecord, 'createdAt' | 'updatedAt'> & {
+        createdAt: string;
+        updatedAt: string;
       }
-    },
-  );
+    >;
+  };
+  return (data.items ?? []).map((item) => ({
+    ...item,
+    createdAt: parseIsoDate(item.createdAt),
+    updatedAt: parseIsoDate(item.updatedAt),
+  }));
 }
 
 export async function saveVentureOpportunity(
@@ -345,7 +287,6 @@ export async function saveVentureOpportunity(
     scoreFeasibility: clampInt(input.scoreFeasibility, 10),
     scoreFit: clampInt(input.scoreFit, 10),
     pipelineStage: input.pipelineStage,
-    updatedAt: serverTimestamp(),
   };
 
   if (!payload.title) {
@@ -353,31 +294,31 @@ export async function saveVentureOpportunity(
   }
 
   if (input.id) {
-    try {
-      await updateDoc(doc(db, OPPS_PATH, input.id), payload);
-      return input.id;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `${OPPS_PATH}/${input.id}`);
-    }
+    const res = await fetch(`/api/discovery/opportunities/${encodeURIComponent(input.id)}`, {
+      method: 'PUT',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Unable to update opportunity.');
+    return input.id;
   }
 
-  try {
-    const ref = await addDoc(collection(db, OPPS_PATH), {
-      ...payload,
-      createdAt: serverTimestamp(),
-    });
-    return ref.id;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, OPPS_PATH);
-  }
+  const res = await fetch('/api/discovery/opportunities', {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Unable to save opportunity.');
+  const data = (await res.json()) as { item: { id: string } };
+  return data.item.id;
 }
 
 export async function deleteVentureOpportunity(oppId: string): Promise<void> {
-  try {
-    await deleteDoc(doc(db, OPPS_PATH, oppId));
-  } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `${OPPS_PATH}/${oppId}`);
-  }
+  const res = await fetch(`/api/discovery/opportunities/${encodeURIComponent(oppId)}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error('Unable to remove opportunity.');
 }
 
 function escapeCsvCell(value: string): string {
@@ -421,6 +362,44 @@ export function exportOpportunitiesToCsv(items: VentureOpportunityRecord[]): voi
   const stamp = new Date().toISOString().slice(0, 10);
   link.href = url;
   link.setAttribute('download', `ajentir-venture-scorecard-${stamp}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function exportDiscoveryOrgsToCsv(items: DiscoveryOrgRecord[]): void {
+  const headers = [
+    'Organisation',
+    'Sector',
+    'Size',
+    'Stage',
+    'Workflow Owners',
+    'Operating Model',
+    'Workflows & Baseline Friction',
+  ];
+
+  const rows = items.map((item) => [
+    item.name,
+    item.sector,
+    item.size,
+    item.status,
+    item.workflowOwners,
+    item.operatingModel,
+    item.workflowsSummary,
+  ]);
+
+  const csvContent = [
+    headers.map(escapeCsvCell).join(','),
+    ...rows.map((r) => r.map((cell) => escapeCsvCell(cell ?? '')).join(',')),
+  ].join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  link.href = url;
+  link.setAttribute('download', `ajentir-discovery-orgs-${stamp}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
