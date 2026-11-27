@@ -131,22 +131,8 @@ export async function submitInquiry(input: CreateInquiryInput): Promise<{ id: st
     handleFirestoreError(error, OperationType.CREATE, INQUIRIES_PATH);
   }
 
-  // Best-effort server-side alert dispatch (no-op on static GitHub Pages)
-  void fetch('/api/notify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      referenceId: createdId.slice(0, 8).toUpperCase(),
-      lane: input.lane,
-      subTrack: input.subTrack,
-      fullName,
-      company,
-      email,
-      website,
-      teamSize,
-      message,
-    }),
-  }).catch(() => undefined);
+  // Notifications are intentionally not sent from the public browser client.
+  // Use a trusted Firestore-triggered backend when server-side delivery is deployed.
 
   return { id: createdId };
 }
