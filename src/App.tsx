@@ -11,6 +11,7 @@ import { InquiryModal } from './components/InquiryModal';
 import { LegalModal } from './components/LegalModal';
 import { MandateSection } from './components/MandateSection';
 import { ProgramBriefModal } from './components/ProgramBriefModal';
+import { WorkflowDiscoverySection } from './components/WorkflowDiscoverySection';
 import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memorandum';
 import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from './lib/inquiries';
 
@@ -88,6 +89,7 @@ export default function App() {
           <main id="main-content">
             <HeroSection onOpenInquiry={() => openInquiry(null)} />
             <ArchitectureSection onSelectOffering={(offering) => setActiveOffering(offering)} />
+            <WorkflowDiscoverySection onOpenInquiry={(preset) => openInquiry(preset)} />
             <MandateSection />
             <FundISection onOpenInquiry={(preset) => openInquiry(preset)} />
           </main>
