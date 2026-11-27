@@ -43,3 +43,24 @@ The repository does not currently include a systemd unit or Windows service wrap
 ## Data protection
 
 The `data/` directory is excluded from version control. Back up the SQLite database while using SQLite's backup mechanism or a consistent snapshot; test restoration. Restrict file permissions to the service account. Never commit the database, production exports, secrets, or inquiry data.
+
+
+## Self-hosted public inquiry transport
+
+The React inquiry form can submit to the same-origin Express endpoint instead of
+Firestore when the frontend is built with:
+
+```sh
+VITE_USE_SELF_HOSTED_API=true npm run build
+```
+
+Leave `VITE_USE_SELF_HOSTED_API` unset (or set it to `false`) for the
+GitHub Pages build. The flag is intentionally opt-in: GitHub Pages does not run
+the Express API, so enabling it on that static deployment would make submissions
+fail. The self-hosted build must be served by the Express process so the form
+and `/api/inquiries` share an origin.
+
+This switches only public inquiry creation. Admin sign-in, inbox reads, triage,
+deletion, team invitations, and site configuration still use Firebase and have
+not yet been migrated. Do not disable or delete Firebase until those workflows
+and existing records have been migrated and verified.

@@ -9,6 +9,7 @@ import type {
 } from '../data/memorandum';
 import { EMAIL_PATTERN, PAYLOAD_LIMITS } from '../lib/firebase';
 import { submitInquiry, type InquirySubTrack, type TeamSizeOption } from '../lib/inquiries';
+import { submitSelfHostedInquiry } from '../lib/selfHostedInquiryApi';
 
 interface InquiryModalProps {
   open: boolean;
@@ -115,7 +116,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
     }
 
     // Silent bot mitigation (honeypot or instant programmatic submission)
-    if (honeypot.trim() !== '' || Date.now() - openedAtRef.current < 800) {
+    if (Date.now() - openedAtRef.current < 800) {
       setSubmittedName(trimmedName);
       setReferenceId('');
       setSubmitted(true);
@@ -126,7 +127,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
     setSubmitting(true);
 
     try {
-      const result = await submitInquiry({
+      const inquiryInput = {
         lane,
         subTrack: getActiveSubTrack(),
         fullName: trimmedName,
@@ -135,7 +136,10 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
         website,
         teamSize: lane === 'training' ? teamSize : '',
         message,
-      });
+      };
+      const result = import.meta.env.VITE_USE_SELF_HOSTED_API === 'true'
+        ? await submitSelfHostedInquiry(inquiryInput, honeypot)
+        : await submitInquiry(inquiryInput);
 
       setSubmittedName(trimmedName);
       setReferenceId(result.id.slice(0, 8).toUpperCase());
