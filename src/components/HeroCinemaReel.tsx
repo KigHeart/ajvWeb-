@@ -79,8 +79,52 @@ export function HeroCinemaReel() {
 
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-[#06262D]/82 via-[#06262D]/20 to-transparent pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-t from-[#06262D]/85 via-[#06262D]/20 to-transparent pointer-events-none"
         />
+
+        {/* Subtle ambient autonomous routing constellation (no tabs or progress lines) */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 220 120"
+          fill="none"
+          className="hidden sm:block absolute top-5 right-5 w-44 h-24 opacity-65 pointer-events-none"
+        >
+          <path
+            d="M20 88 C68 84, 92 38, 138 42 C164 44, 182 24, 198 22"
+            stroke="rgba(226,194,117,0.45)"
+            strokeWidth="1.2"
+            strokeDasharray="4 4"
+          />
+          <path
+            d="M38 30 C76 34, 102 68, 154 74 C174 76, 188 64, 198 54"
+            stroke="rgba(214,226,228,0.35)"
+            strokeWidth="1"
+          />
+          <motion.circle
+            cx="138"
+            cy="42"
+            r="3.2"
+            fill="#E2C275"
+            animate={{ opacity: [0.45, 1, 0.45], r: [2.8, 3.8, 2.8] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.circle
+            cx="198"
+            cy="22"
+            r="2.6"
+            fill="#F5F7F7"
+            animate={{ opacity: [0.35, 0.9, 0.35] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 0.6 }}
+          />
+          <motion.circle
+            cx="38"
+            cy="30"
+            r="2.4"
+            fill="#E2C275"
+            animate={{ opacity: [0.3, 0.85, 0.3] }}
+            transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: 1.1 }}
+          />
+        </svg>
 
         <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto z-10">
           <AnimatePresence mode="wait">

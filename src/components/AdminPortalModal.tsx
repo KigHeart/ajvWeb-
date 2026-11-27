@@ -44,6 +44,7 @@ import {
 interface AdminPortalModalProps {
   open: boolean;
   onClose: () => void;
+  onSiteConfigUpdated?: (config: SiteConfig) => void;
 }
 
 type PortalTab = 'inbox' | 'site' | 'team';
@@ -100,7 +101,11 @@ function buildQuickReplyHref(item: InquiryRecord): string {
   return `mailto:${item.email}?subject=${subject}&body=${body}`;
 }
 
-export function AdminPortalModal({ open, onClose }: AdminPortalModalProps) {
+export function AdminPortalModal({
+  open,
+  onClose,
+  onSiteConfigUpdated,
+}: AdminPortalModalProps) {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -297,6 +302,7 @@ export function AdminPortalModal({ open, onClose }: AdminPortalModalProps) {
     setConfigSaved(false);
     try {
       await saveSiteConfig(siteConfig);
+      onSiteConfigUpdated?.(siteConfig);
       setConfigSaved(true);
     } catch {
       setConfigError('Failed to update live site configuration.');

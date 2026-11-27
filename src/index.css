@@ -11,6 +11,7 @@
     font-family: var(--font-sans);
     background-color: #EDF1F2;
     color: #0B2228;
+    scroll-padding-top: 5.5rem;
   }
 
   h1, h2, h3, .font-display {

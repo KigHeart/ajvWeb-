@@ -12,6 +12,15 @@ import { LegalModal } from './components/LegalModal';
 import { MandateSection } from './components/MandateSection';
 import { ProgramBriefModal } from './components/ProgramBriefModal';
 import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memorandum';
+import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from './lib/inquiries';
+
+const TRACK_PRESETS: Record<string, InquiryPreset> = {
+  investment: { lane: 'founder', founderTrack: 'investment' },
+  incubation: { lane: 'founder', founderTrack: 'incubation' },
+  training: { lane: 'training', trainingFocus: 'governance' },
+  partners: { lane: 'partner', partnerType: 'bank' },
+  partner: { lane: 'partner', partnerType: 'bank' },
+};
 
 export default function App() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
@@ -19,6 +28,7 @@ export default function App() {
   const [activeOffering, setActiveOffering] = useState<OfferingItem | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [portalOpen, setPortalOpen] = useState(false);
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
 
   const openInquiry = (preset: InquiryPreset | null = null) => {
     setInquiryPreset(preset);
@@ -26,7 +36,18 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (window.location.hash === '#portal' || window.location.hash === '#admin') {
+    void fetchSiteConfig().then(setSiteConfig);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const track = params.get('track')?.toLowerCase();
+    if (track && TRACK_PRESETS[track]) {
+      setInquiryPreset(TRACK_PRESETS[track]);
+      setInquiryOpen(true);
+    } else if (window.location.hash === '#inquire') {
+      setInquiryOpen(true);
+    } else if (window.location.hash === '#portal' || window.location.hash === '#admin') {
       setPortalOpen(true);
     }
   }, []);
@@ -68,9 +89,7 @@ export default function App() {
             <HeroSection onOpenInquiry={() => openInquiry(null)} />
             <ArchitectureSection onSelectOffering={(offering) => setActiveOffering(offering)} />
             <MandateSection />
-            <FundISection
-              onPartnerInquiry={() => openInquiry({ lane: 'partner', partnerType: 'bank' })}
-            />
+            <FundISection onOpenInquiry={(preset) => openInquiry(preset)} />
           </main>
 
           <ContactFooter
@@ -81,6 +100,7 @@ export default function App() {
 
           <ProgramBriefModal
             offering={activeOffering}
+            siteConfig={siteConfig}
             onClose={() => setActiveOffering(null)}
             onProceedToInquiry={(offering) => {
               setActiveOffering(null);
@@ -96,7 +116,11 @@ export default function App() {
 
           <LegalModal open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
 
-          <AdminPortalModal open={portalOpen} onClose={() => setPortalOpen(false)} />
+          <AdminPortalModal
+            open={portalOpen}
+            onClose={() => setPortalOpen(false)}
+            onSiteConfigUpdated={(nextConfig) => setSiteConfig(nextConfig)}
+          />
         </div>
       </MotionConfig>
     </ErrorBoundary>

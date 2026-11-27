@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowUpRight } from 'lucide-react';
 import { FOCUS_AREAS } from '../data/memorandum';
@@ -6,10 +6,29 @@ import { ResilientImage } from './ResilientImage';
 
 export function MandateSection() {
   const [activeId, setActiveId] = useState(FOCUS_AREAS[0].id);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const timer = window.setInterval(() => {
+      setActiveId((prev) => {
+        const idx = FOCUS_AREAS.findIndex((item) => item.id === prev);
+        const nextIdx = (idx + 1) % FOCUS_AREAS.length;
+        return FOCUS_AREAS[nextIdx].id;
+      });
+    }, 5500);
+    return () => window.clearInterval(timer);
+  }, [paused]);
+
   const current = FOCUS_AREAS.find((v) => v.id === activeId) || FOCUS_AREAS[0];
 
   return (
-    <section id="focus" className="py-20 lg:py-28">
+    <section
+      id="focus"
+      className="py-20 lg:py-28"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           <div className="lg:col-span-7">
@@ -32,8 +51,15 @@ export function MandateSection() {
                   <button
                     key={area.id}
                     type="button"
-                    onMouseEnter={() => setActiveId(area.id)}
-                    onClick={() => setActiveId(area.id)}
+                    onMouseEnter={() => {
+                      setPaused(true);
+                      setActiveId(area.id);
+                    }}
+                    onFocus={() => setPaused(true)}
+                    onClick={() => {
+                      setPaused(true);
+                      setActiveId(area.id);
+                    }}
                     aria-expanded={isActive}
                     className={`w-full text-left px-6 py-5 rounded-2xl transition-all duration-200 group cursor-pointer focus-visible:outline-2 focus-visible:outline-[#0B5563] ${
                       isActive ? 'neu-raised' : 'hover:bg-white/40'

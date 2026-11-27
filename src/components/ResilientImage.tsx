@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ResilientImageProps {
   src: string;
@@ -9,6 +9,10 @@ interface ResilientImageProps {
 
 export function ResilientImage({ src, alt, className = '', fallbackTitle }: ResilientImageProps) {
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
 
   if (failed) {
     return (
@@ -39,6 +43,7 @@ export function ResilientImage({ src, alt, className = '', fallbackTitle }: Resi
     <img
       src={src}
       alt={alt}
+      decoding="async"
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
       className={className}

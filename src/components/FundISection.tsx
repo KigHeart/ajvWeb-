@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { ArrowUpRight } from 'lucide-react';
+import type { InquiryPreset } from '../data/memorandum';
 
 interface FundISectionProps {
-  onPartnerInquiry: () => void;
+  onOpenInquiry: (preset: InquiryPreset) => void;
 }
 
 const APPROACH_SLIDES = [
@@ -26,7 +28,34 @@ const APPROACH_SLIDES = [
   },
 ];
 
-export function FundISection({ onPartnerInquiry }: FundISectionProps) {
+const ECOSYSTEM_NODES: {
+  title: string;
+  role: string;
+  preset: InquiryPreset;
+}[] = [
+  {
+    title: 'Founders & Builders',
+    role: 'Capital and demand-backed incubation',
+    preset: { lane: 'founder', founderTrack: 'incubation' },
+  },
+  {
+    title: 'SME Leadership',
+    role: 'Executive governance and workflow clinics',
+    preset: { lane: 'training', trainingFocus: 'governance' },
+  },
+  {
+    title: 'Commercial Banks',
+    role: 'Regulated sandbox pilots and underwriting',
+    preset: { lane: 'partner', partnerType: 'bank' },
+  },
+  {
+    title: 'AI Model Providers',
+    role: 'Pooled compute credits and SME distribution',
+    preset: { lane: 'partner', partnerType: 'model-provider' },
+  },
+];
+
+export function FundISection({ onOpenInquiry }: FundISectionProps) {
   const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
@@ -56,7 +85,7 @@ export function FundISection({ onPartnerInquiry }: FundISectionProps) {
 
           <button
             type="button"
-            onClick={onPartnerInquiry}
+            onClick={() => onOpenInquiry({ lane: 'partner', partnerType: 'bank' })}
             className="self-start sm:self-auto px-6 py-3 text-xs font-semibold text-[#06262D] bg-[#E2C275] hover:bg-[#ECD08D] rounded-xl transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
             Partner With Us
@@ -88,6 +117,28 @@ export function FundISection({ onPartnerInquiry }: FundISectionProps) {
               </div>
             </motion.div>
           </AnimatePresence>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {ECOSYSTEM_NODES.map((node) => (
+            <button
+              key={node.title}
+              type="button"
+              onClick={() => onOpenInquiry(node.preset)}
+              className="glass-dark rounded-2xl p-5 text-left group hover:border-[#E2C275]/45 transition-colors cursor-pointer flex flex-col justify-between gap-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-display text-sm font-semibold text-white group-hover:text-[#E2C275] transition-colors">
+                  {node.title}
+                </span>
+                <ArrowUpRight
+                  className="w-3.5 h-3.5 text-[#E2C275]/80 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  aria-hidden="true"
+                />
+              </div>
+              <p className="text-xs text-[#C1D2D5] leading-relaxed">{node.role}</p>
+            </button>
+          ))}
         </div>
       </div>
     </section>

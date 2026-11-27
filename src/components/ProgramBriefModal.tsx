@@ -1,26 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { ArrowRight, X } from 'lucide-react';
 import type { OfferingItem } from '../data/memorandum';
-import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from '../lib/inquiries';
+import type { SiteConfig } from '../lib/inquiries';
 
 interface ProgramBriefModalProps {
   offering: OfferingItem | null;
+  siteConfig: SiteConfig;
   onClose: () => void;
   onProceedToInquiry: (offering: OfferingItem) => void;
 }
 
 export function ProgramBriefModal({
   offering,
+  siteConfig,
   onClose,
   onProceedToInquiry,
 }: ProgramBriefModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const [siteConfig, setSiteConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
 
   useEffect(() => {
     if (offering) {
       const timer = window.setTimeout(() => closeButtonRef.current?.focus(), 40);
-      void fetchSiteConfig().then(setSiteConfig);
       return () => window.clearTimeout(timer);
     }
   }, [offering]);

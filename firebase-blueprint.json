@@ -54,6 +54,11 @@
           "maxLength": 40,
           "description": "Optional leadership cohort size for Executive Training."
         },
+        "preferredSession": {
+          "type": "string",
+          "maxLength": 140,
+          "description": "Optional preferred upcoming Executive Training briefing session label."
+        },
         "message": {
           "type": "string",
           "maxLength": 2000,
@@ -107,11 +112,81 @@
         "email",
         "website",
         "teamSize",
+        "preferredSession",
         "message",
         "status",
         "stageTag",
         "designPartner",
         "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "InquiryActivity": {
+      "title": "InquiryActivity",
+      "description": "Immutable chronological triage log entry inside an inquiry subcollection.",
+      "type": "object",
+      "properties": {
+        "actorEmail": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["actorEmail", "summary", "createdAt"]
+    },
+    "BriefingSession": {
+      "title": "BriefingSession",
+      "description": "Scheduled SME Executive Training briefing session managed by admins and selectable in Training inquiries.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "scheduleLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "format": {
+          "type": "string",
+          "enum": ["Nairobi · In-Person", "Virtual · Live", "Hybrid"],
+          "maxLength": 40
+        },
+        "seatsLabel": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "isOpen": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "title",
+        "scheduleLabel",
+        "format",
+        "seatsLabel",
+        "isOpen",
         "createdAt",
         "updatedAt"
       ]
@@ -212,6 +287,14 @@
     "/inquiries/{inquiryId}": {
       "schema": { "$ref": "#/entities/Inquiry" },
       "description": "Publicly creatable (schema-validated) inquiry submissions readable and triaged solely by verified admins."
+    },
+    "/inquiries/{inquiryId}/activity/{activityId}": {
+      "schema": { "$ref": "#/entities/InquiryActivity" },
+      "description": "Immutable admin triage activity log under each inquiry."
+    },
+    "/briefing_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/BriefingSession" },
+      "description": "Executive Training briefing sessions; open sessions are readable publicly and all sessions are admin-managed."
     },
     "/admins/{adminId}": {
       "schema": { "$ref": "#/entities/AdminUser" },
