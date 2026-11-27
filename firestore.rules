@@ -39,7 +39,10 @@ service cloud.firestore {
         && request.auth.token.email is string
         && exists(/databases/$(database)/documents/admin_invites/$(request.auth.token.email))
         && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.email == request.auth.token.email
-        && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.role == 'admin';
+        && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.role == 'admin'
+        // Invitations expire 30 days after creation; owner can revoke sooner by deletion.
+        && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.createdAt is timestamp
+        && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.createdAt > request.time - duration.value(30, 'd');
     }
 
     function isRegisteredAdmin() {
