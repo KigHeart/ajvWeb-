@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -7,15 +7,14 @@ import firebaseConfig from '../../firebase-applet-config.json';
 const app = initializeApp(firebaseConfig);
 
 const recaptchaSiteKey = (
-  import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
-  firebaseConfig.recaptchaSiteKey ||
+  import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY ||
   ''
 ).trim();
 
 if (recaptchaSiteKey && typeof window !== 'undefined') {
   try {
     initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+      provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
       isTokenAutoRefreshEnabled: true,
     });
   } catch {
