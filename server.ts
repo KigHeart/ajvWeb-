@@ -84,6 +84,10 @@ function cleanDeskInput(body: unknown): DeskInput | null {
     if (source[key] !== null && (typeof source[key] !== "number" || !Number.isFinite(source[key]))) return null;
     result[key] = source[key];
   }
+  if (result.status && !["active","incubating","paused","exited","captured","investigating","validating","validated","rejected","todo","in_progress","blocked","done","unverified","observed","documented","commercial","prospect","engaged","design_partner","customer","inactive"].includes(result.status as string)) return null;
+  if (result.priority && !["low","normal","high","critical"].includes(result.priority as string)) return null;
+  if (typeof result.score === "number" && (result.score < 0 || result.score > 100)) return null;
+  if (typeof result.value === "number" && result.value < 0) return null;
   if (source.data !== undefined) {
     if (!source.data || typeof source.data !== "object" || Array.isArray(source.data) || JSON.stringify(source.data).length > 8000) return null;
     result.data = source.data;
