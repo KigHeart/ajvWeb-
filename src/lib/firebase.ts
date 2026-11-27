@@ -19,8 +19,10 @@ if (recaptchaSiteKey && typeof window !== 'undefined') {
       isTokenAutoRefreshEnabled: true,
     });
   } catch {
-    // Non-fatal if App Check is not yet enabled on the Firebase project
+    console.warn('Firebase App Check could not initialize. Verify the site key, provider, and allowed domain.');
   }
+} else if (typeof window !== 'undefined') {
+  console.warn('Firebase App Check is not configured. Public Firestore writes remain exposed to automated abuse until App Check is enabled and enforced.');
 }
 
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
