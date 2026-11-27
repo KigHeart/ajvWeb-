@@ -77,6 +77,13 @@ export interface AdminInviteRecord {
   createdAt: Date | null;
 }
 
+export interface RegisteredAdminRecord {
+  uid: string;
+  email: string;
+  displayName: string;
+  createdAt: Date | null;
+}
+
 export interface SiteConfig {
   incubationStatus: IncubationStatus;
   nextBriefingLabel: string;
@@ -333,6 +340,43 @@ export async function removeAdminInvite(email: string): Promise<void> {
   const path = `${INVITES_PATH}/${normalized}`;
   try {
     await deleteDoc(doc(db, INVITES_PATH, normalized));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+export function subscribeToRegisteredAdmins(
+  onData: (items: RegisteredAdminRecord[]) => void,
+  onError: (err: Error) => void,
+): Unsubscribe {
+  const q = query(collection(db, ADMINS_PATH), orderBy('createdAt', 'desc'));
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      onData(snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          uid: d.id,
+          email: typeof data.email === 'string' ? data.email : '',
+          displayName: typeof data.displayName === 'string' ? data.displayName : '',
+          createdAt: toDate(data.createdAt),
+        };
+      }));
+    },
+    (error) => {
+      try {
+        handleFirestoreError(error, OperationType.LIST, ADMINS_PATH);
+      } catch (wrapped) {
+        onError(wrapped instanceof Error ? wrapped : new Error(String(wrapped)));
+      }
+    },
+  );
+}
+
+export async function removeRegisteredAdmin(uid: string): Promise<void> {
+  const path = `${ADMINS_PATH}/${uid}`;
+  try {
+    await deleteDoc(doc(db, ADMINS_PATH, uid));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
   }
