@@ -11,6 +11,7 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
+  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import type { FounderTrack, InquiryLane, PartnerType, TrainingFocus } from '../data/memorandum';
@@ -373,12 +374,14 @@ export function subscribeToRegisteredAdmins(
   );
 }
 
-export async function removeRegisteredAdmin(uid: string): Promise<void> {
-  const path = `${ADMINS_PATH}/${uid}`;
+export async function removeRegisteredAdmin(uid: string, email: string): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, ADMINS_PATH, uid));
+  batch.delete(doc(db, INVITES_PATH, email.trim().toLowerCase()));
   try {
-    await deleteDoc(doc(db, ADMINS_PATH, uid));
+    await batch.commit();
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+    handleFirestoreError(error, OperationType.DELETE, `${ADMINS_PATH}/${uid}`);
   }
 }
 
