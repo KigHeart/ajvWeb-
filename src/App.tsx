@@ -12,6 +12,7 @@ import { LegalModal } from './components/LegalModal';
 import { MandateSection } from './components/MandateSection';
 import { ProgramBriefModal } from './components/ProgramBriefModal';
 import { WorkflowDiscoverySection } from './components/WorkflowDiscoverySection';
+import { VentureDesk } from './components/VentureDesk';
 import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memorandum';
 import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from './lib/inquiries';
 
@@ -72,6 +73,8 @@ export default function App() {
       img.src = area.image;
     });
   }, []);
+
+  if (window.location.pathname === '/venture-desk') return <VentureDesk />;
 
   return (
     <ErrorBoundary>
