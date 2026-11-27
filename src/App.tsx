@@ -25,6 +25,10 @@ const TRACK_PRESETS: Record<string, InquiryPreset> = {
 };
 
 export default function App() {
+  return window.location.pathname === '/venture-desk' ? <VentureDesk /> : <AjentirSite />;
+}
+
+function AjentirSite() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryPreset, setInquiryPreset] = useState<InquiryPreset | null>(null);
   const [activeOffering, setActiveOffering] = useState<OfferingItem | null>(null);
@@ -73,8 +77,6 @@ export default function App() {
       img.src = area.image;
     });
   }, []);
-
-  if (window.location.pathname === '/venture-desk') return <VentureDesk />;
 
   return (
     <ErrorBoundary>
