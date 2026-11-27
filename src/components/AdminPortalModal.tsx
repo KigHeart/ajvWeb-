@@ -339,10 +339,7 @@ export function AdminPortalModal({
     if (!admin) return;
     try {
       // Remove both possible grants: the UID registration and any email invite.
-      await Promise.all([
-        removeRegisteredAdmin(uid),
-        removeAdminInvite(admin.email),
-      ]);
+      await removeRegisteredAdmin(uid, admin.email);
     } catch {
       setTeamError('Unable to fully revoke administrator access. Check both the registered roster and invitations.');
     }
