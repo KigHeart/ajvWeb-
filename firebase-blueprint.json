@@ -15,6 +15,7 @@
           "enum": [
             "investment",
             "incubation",
+            "discovery",
             "governance",
             "workflow",
             "workshop",
@@ -22,7 +23,7 @@
             "bank",
             "enterprise"
           ],
-          "description": "Specific program or partnership sub-track."
+          "description": "Specific program, discovery, or partnership sub-track."
         },
         "fullName": {
           "type": "string",
@@ -53,11 +54,6 @@
           "enum": ["", "1-10 leaders", "11-30 leaders", "30+ leaders"],
           "maxLength": 40,
           "description": "Optional leadership cohort size for Executive Training."
-        },
-        "preferredSession": {
-          "type": "string",
-          "maxLength": 140,
-          "description": "Optional preferred upcoming Executive Training briefing session label."
         },
         "message": {
           "type": "string",
@@ -112,81 +108,11 @@
         "email",
         "website",
         "teamSize",
-        "preferredSession",
         "message",
         "status",
         "stageTag",
         "designPartner",
         "notes",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "InquiryActivity": {
-      "title": "InquiryActivity",
-      "description": "Immutable chronological triage log entry inside an inquiry subcollection.",
-      "type": "object",
-      "properties": {
-        "actorEmail": {
-          "type": "string",
-          "format": "email",
-          "minLength": 3,
-          "maxLength": 160
-        },
-        "summary": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 400
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": ["actorEmail", "summary", "createdAt"]
-    },
-    "BriefingSession": {
-      "title": "BriefingSession",
-      "description": "Scheduled SME Executive Training briefing session managed by admins and selectable in Training inquiries.",
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 120
-        },
-        "scheduleLabel": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 80
-        },
-        "format": {
-          "type": "string",
-          "enum": ["Nairobi · In-Person", "Virtual · Live", "Hybrid"],
-          "maxLength": 40
-        },
-        "seatsLabel": {
-          "type": "string",
-          "maxLength": 60
-        },
-        "isOpen": {
-          "type": "boolean"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "title",
-        "scheduleLabel",
-        "format",
-        "seatsLabel",
-        "isOpen",
         "createdAt",
         "updatedAt"
       ]
@@ -281,20 +207,158 @@
         "partnerSandboxNote",
         "updatedAt"
       ]
+    },
+    "DiscoveryOrg": {
+      "title": "DiscoveryOrg",
+      "description": "Internal organisation profile and workflow inventory tracked inside Ajentir Venture Discovery System v1.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "sector": {
+          "type": "string",
+          "enum": [
+            "Financial services",
+            "Agriculture",
+            "Logistics",
+            "Healthcare",
+            "Retail & distribution",
+            "Professional services",
+            "Construction",
+            "Other"
+          ]
+        },
+        "size": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "operatingModel": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "workflowOwners": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "workflowsSummary": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Access", "Mapping", "Decomposing", "Completed"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "name",
+        "sector",
+        "size",
+        "operatingModel",
+        "workflowOwners",
+        "workflowsSummary",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "VentureOpportunity": {
+      "title": "VentureOpportunity",
+      "description": "Internal opportunity register, 100-point scorecard, validation evidence, and pipeline stage.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "orgId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "orgName": {
+          "type": "string",
+          "maxLength": 140
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "A — Internal transformation",
+            "B — Replicable product",
+            "C — New venture"
+          ]
+        },
+        "intervention": {
+          "type": "string",
+          "enum": ["Eliminate", "Simplify", "Augment", "Delegate", "Reconstruct"]
+        },
+        "problemSummary": {
+          "type": "string",
+          "maxLength": 1200
+        },
+        "validationEvidence": {
+          "type": "string",
+          "maxLength": 1200
+        },
+        "hasPaidDemandEvidence": {
+          "type": "boolean"
+        },
+        "scoreSeverity": { "type": "integer" },
+        "scoreRepeatability": { "type": "integer" },
+        "scoreWtp": { "type": "integer" },
+        "scoreAgentic": { "type": "integer" },
+        "scoreScalability": { "type": "integer" },
+        "scoreFeasibility": { "type": "integer" },
+        "scoreFit": { "type": "integer" },
+        "pipelineStage": {
+          "type": "string",
+          "enum": ["Reject", "Investigate", "Validate", "Incubate", "Invest"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "title",
+        "orgId",
+        "orgName",
+        "category",
+        "intervention",
+        "problemSummary",
+        "validationEvidence",
+        "hasPaidDemandEvidence",
+        "scoreSeverity",
+        "scoreRepeatability",
+        "scoreWtp",
+        "scoreAgentic",
+        "scoreScalability",
+        "scoreFeasibility",
+        "scoreFit",
+        "pipelineStage",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
     "/inquiries/{inquiryId}": {
       "schema": { "$ref": "#/entities/Inquiry" },
       "description": "Publicly creatable (schema-validated) inquiry submissions readable and triaged solely by verified admins."
-    },
-    "/inquiries/{inquiryId}/activity/{activityId}": {
-      "schema": { "$ref": "#/entities/InquiryActivity" },
-      "description": "Immutable admin triage activity log under each inquiry."
-    },
-    "/briefing_sessions/{sessionId}": {
-      "schema": { "$ref": "#/entities/BriefingSession" },
-      "description": "Executive Training briefing sessions; open sessions are readable publicly and all sessions are admin-managed."
     },
     "/admins/{adminId}": {
       "schema": { "$ref": "#/entities/AdminUser" },
@@ -307,6 +371,14 @@
     "/public_config/{configId}": {
       "schema": { "$ref": "#/entities/SiteConfig" },
       "description": "Single live site configuration document ('site') readable publicly and editable only by verified admins."
+    },
+    "/discovery_orgs/{orgId}": {
+      "schema": { "$ref": "#/entities/DiscoveryOrg" },
+      "description": "Admin-only organisation profiles and workflow capture inventories."
+    },
+    "/venture_opportunities/{oppId}": {
+      "schema": { "$ref": "#/entities/VentureOpportunity" },
+      "description": "Admin-only opportunity register, 100-point scorecard, validation tracker, and venture pipeline."
     }
   }
 }

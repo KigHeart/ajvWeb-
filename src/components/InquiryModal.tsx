@@ -50,8 +50,9 @@ const TEAM_SIZE_OPTIONS: { id: Exclude<TeamSizeOption, ''>; label: string }[] = 
 ];
 
 const PARTNER_TYPES: { id: PartnerType; label: string }[] = [
-  { id: 'model-provider', label: 'AI Model Provider' },
+  { id: 'discovery', label: 'Workflow Discovery' },
   { id: 'bank', label: 'Bank / FI' },
+  { id: 'model-provider', label: 'AI Model Provider' },
   { id: 'enterprise', label: 'Enterprise Network' },
 ];
 
@@ -375,9 +376,9 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
               {lane === 'partner' && (
                 <div>
                   <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                    Partner Type
+                    Collaboration Type
                   </span>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {PARTNER_TYPES.map((opt) => {
                       const active = partnerType === opt.id;
                       return (

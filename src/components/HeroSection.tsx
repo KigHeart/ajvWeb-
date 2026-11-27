@@ -22,9 +22,9 @@ export function HeroSection({ onOpenInquiry }: HeroSectionProps) {
           </h1>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
-            <p className="text-base sm:text-[17px] leading-[1.65] text-[#43585D] max-w-[46ch]">
-              We back teams building autonomous workflows for SMEs—businesses deeply underserved by
-              agentic AI infrastructure.
+            <p className="text-base sm:text-[17px] leading-[1.65] text-[#43585D] max-w-[48ch]">
+              We discover repeatable workflow problems inside organisations and back agentic AI
+              ventures built for underserved SMEs.
             </p>
 
             <div className="flex items-center gap-4 shrink-0">

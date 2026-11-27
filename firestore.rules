@@ -37,26 +37,23 @@ service cloud.firestore {
     function isInvitedAdmin() {
       return isSignedIn()
         && request.auth.token.email is string
-        && exists(/databases/$(database)/documents/admin_invites/$(request.auth.token.email))
-        && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.email == request.auth.token.email
-        && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.role == 'admin';
-    }
-
-    function isRegisteredAdmin() {
-      return isSignedIn()
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.email == request.auth.token.email
-        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+        && exists(/databases/$(database)/documents/admin_invites/$(request.auth.token.email));
     }
 
     function isAdmin() {
-      return isBootstrappedAdmin() || isRegisteredAdmin() || isInvitedAdmin();
+      return isBootstrappedAdmin()
+        || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)))
+        || isInvitedAdmin();
     }
 
     function isValidLanePair(lane, subTrack) {
       return (lane == 'founder' && subTrack in ['investment', 'incubation'])
         || (lane == 'training' && subTrack in ['governance', 'workflow', 'workshop'])
-        || (lane == 'partner' && subTrack in ['model-provider', 'bank', 'enterprise']);
+        || (lane == 'partner' && subTrack in ['discovery', 'model-provider', 'bank', 'enterprise']);
+    }
+
+    function isIntInRange(val, minVal, maxVal) {
+      return val is int && val >= minVal && val <= maxVal;
     }
 
     // 3. Entity Validation Blueprints
@@ -69,7 +66,6 @@ service cloud.firestore {
           'email',
           'website',
           'teamSize',
-          'preferredSession',
           'message',
           'status',
           'stageTag',
@@ -86,7 +82,6 @@ service cloud.firestore {
           'email',
           'website',
           'teamSize',
-          'preferredSession',
           'message',
           'status',
           'stageTag',
@@ -114,8 +109,6 @@ service cloud.firestore {
         && data.teamSize is string
         && data.teamSize.size() <= 40
         && data.teamSize in ['', '1-10 leaders', '11-30 leaders', '30+ leaders']
-        && data.preferredSession is string
-        && data.preferredSession.size() <= 140
         && data.message is string
         && data.message.size() <= 2000
         && data.status is string
@@ -127,54 +120,6 @@ service cloud.firestore {
         && data.designPartner.size() <= 140
         && data.notes is string
         && data.notes.size() <= 2000
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
-    }
-
-    function isValidInquiryActivity(data) {
-      return data.keys().hasAll(['actorEmail', 'summary', 'createdAt'])
-        && data.keys().hasOnly(['actorEmail', 'summary', 'createdAt'])
-        && data.actorEmail is string
-        && data.actorEmail.size() >= 3
-        && data.actorEmail.size() <= 160
-        && data.actorEmail == request.auth.token.email
-        && data.summary is string
-        && data.summary.size() >= 1
-        && data.summary.size() <= 400
-        && data.createdAt is timestamp;
-    }
-
-    function isValidBriefingSession(data) {
-      return data.keys().hasAll([
-          'title',
-          'scheduleLabel',
-          'format',
-          'seatsLabel',
-          'isOpen',
-          'createdAt',
-          'updatedAt'
-        ])
-        && data.keys().hasOnly([
-          'title',
-          'scheduleLabel',
-          'format',
-          'seatsLabel',
-          'isOpen',
-          'createdAt',
-          'updatedAt'
-        ])
-        && data.title is string
-        && data.title.size() >= 1
-        && data.title.size() <= 120
-        && data.scheduleLabel is string
-        && data.scheduleLabel.size() >= 1
-        && data.scheduleLabel.size() <= 80
-        && data.format is string
-        && data.format.size() <= 40
-        && data.format in ['Nairobi · In-Person', 'Virtual · Live', 'Hybrid']
-        && data.seatsLabel is string
-        && data.seatsLabel.size() <= 60
-        && data.isOpen is bool
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -210,7 +155,6 @@ service cloud.firestore {
         && data.addedBy is string
         && data.addedBy.size() >= 3
         && data.addedBy.size() <= 160
-        && data.addedBy == request.auth.token.email
         && data.createdAt is timestamp;
     }
 
@@ -237,7 +181,133 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
-    // 4. Inquiries Collection & Activity Subcollection
+    function isValidDiscoveryOrg(data) {
+      return data.keys().hasAll([
+          'name',
+          'sector',
+          'size',
+          'operatingModel',
+          'workflowOwners',
+          'workflowsSummary',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'sector',
+          'size',
+          'operatingModel',
+          'workflowOwners',
+          'workflowsSummary',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 140
+        && data.sector is string
+        && data.sector in [
+          'Financial services',
+          'Agriculture',
+          'Logistics',
+          'Healthcare',
+          'Retail & distribution',
+          'Professional services',
+          'Construction',
+          'Other'
+        ]
+        && data.size is string
+        && data.size.size() <= 60
+        && data.operatingModel is string
+        && data.operatingModel.size() <= 240
+        && data.workflowOwners is string
+        && data.workflowOwners.size() <= 200
+        && data.workflowsSummary is string
+        && data.workflowsSummary.size() <= 3000
+        && data.status is string
+        && data.status in ['Access', 'Mapping', 'Decomposing', 'Completed']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidVentureOpportunity(data) {
+      return data.keys().hasAll([
+          'title',
+          'orgId',
+          'orgName',
+          'category',
+          'intervention',
+          'problemSummary',
+          'validationEvidence',
+          'hasPaidDemandEvidence',
+          'scoreSeverity',
+          'scoreRepeatability',
+          'scoreWtp',
+          'scoreAgentic',
+          'scoreScalability',
+          'scoreFeasibility',
+          'scoreFit',
+          'pipelineStage',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title',
+          'orgId',
+          'orgName',
+          'category',
+          'intervention',
+          'problemSummary',
+          'validationEvidence',
+          'hasPaidDemandEvidence',
+          'scoreSeverity',
+          'scoreRepeatability',
+          'scoreWtp',
+          'scoreAgentic',
+          'scoreScalability',
+          'scoreFeasibility',
+          'scoreFit',
+          'pipelineStage',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 140
+        && data.orgId is string
+        && data.orgId.size() <= 128
+        && (data.orgId == '' || (isValidId(data.orgId) && exists(/databases/$(database)/documents/discovery_orgs/$(data.orgId))))
+        && data.orgName is string
+        && data.orgName.size() <= 140
+        && data.category is string
+        && data.category in [
+          'A — Internal transformation',
+          'B — Replicable product',
+          'C — New venture'
+        ]
+        && data.intervention is string
+        && data.intervention in ['Eliminate', 'Simplify', 'Augment', 'Delegate', 'Reconstruct']
+        && data.problemSummary is string
+        && data.problemSummary.size() <= 1200
+        && data.validationEvidence is string
+        && data.validationEvidence.size() <= 1200
+        && data.hasPaidDemandEvidence is bool
+        && isIntInRange(data.scoreSeverity, 0, 15)
+        && isIntInRange(data.scoreRepeatability, 0, 15)
+        && isIntInRange(data.scoreWtp, 0, 20)
+        && isIntInRange(data.scoreAgentic, 0, 15)
+        && isIntInRange(data.scoreScalability, 0, 15)
+        && isIntInRange(data.scoreFeasibility, 0, 10)
+        && isIntInRange(data.scoreFit, 0, 10)
+        && data.pipelineStage is string
+        && data.pipelineStage in ['Reject', 'Investigate', 'Validate', 'Incubate', 'Invest']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // 4. Inquiries Collection
     match /inquiries/{inquiryId} {
       allow get: if isValidId(inquiryId) && isAdmin();
       allow list: if isAdmin();
@@ -265,51 +335,9 @@ service cloud.firestore {
         ]);
 
       allow delete: if isValidId(inquiryId) && isAdmin();
-
-      match /activity/{activityId} {
-        allow get: if isValidId(inquiryId)
-          && isValidId(activityId)
-          && isAdmin()
-          && exists(/databases/$(database)/documents/inquiries/$(inquiryId));
-        allow list: if isValidId(inquiryId)
-          && isAdmin()
-          && exists(/databases/$(database)/documents/inquiries/$(inquiryId));
-        allow create: if isValidId(inquiryId)
-          && isValidId(activityId)
-          && isAdmin()
-          && exists(/databases/$(database)/documents/inquiries/$(inquiryId))
-          && isValidInquiryActivity(incoming())
-          && incoming().createdAt == request.time;
-        allow update, delete: if false;
-      }
     }
 
-    // 5. Executive Training Briefing Sessions
-    match /briefing_sessions/{sessionId} {
-      allow get: if isValidId(sessionId) && (existing().isOpen == true || isAdmin());
-      allow list: if existing().isOpen == true || isAdmin();
-      allow create: if isValidId(sessionId)
-        && isAdmin()
-        && isValidBriefingSession(incoming())
-        && incoming().createdAt == request.time
-        && incoming().updatedAt == request.time;
-      allow update: if isValidId(sessionId)
-        && isAdmin()
-        && isValidBriefingSession(incoming())
-        && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly([
-          'title',
-          'scheduleLabel',
-          'format',
-          'seatsLabel',
-          'isOpen',
-          'updatedAt'
-        ]);
-      allow delete: if isValidId(sessionId) && isAdmin();
-    }
-
-    // 6. Admins Collection (UID-based)
+    // 5. Admins Collection (UID-based)
     match /admins/{adminId} {
       allow get: if isValidId(adminId) && (isAdmin() || (isSignedIn() && request.auth.uid == adminId));
       allow list: if isAdmin();
@@ -325,7 +353,7 @@ service cloud.firestore {
       allow delete: if isValidId(adminId) && isBootstrappedAdmin();
     }
 
-    // 7. Admin Invites Collection (Email-based team access)
+    // 6. Admin Invites Collection (Email-based team access)
     match /admin_invites/{emailId} {
       allow get: if isValidEmailId(emailId)
         && (isBootstrappedAdmin() || (isSignedIn() && request.auth.token.email == emailId));
@@ -338,7 +366,7 @@ service cloud.firestore {
       allow delete: if isValidEmailId(emailId) && isBootstrappedAdmin();
     }
 
-    // 8. Public Site Config (Dynamic Cohort & Briefing Labels)
+    // 7. Public Site Config (Dynamic Cohort & Briefing Labels)
     match /public_config/{configId} {
       allow get: if configId == 'site';
       allow list: if false;
@@ -347,6 +375,69 @@ service cloud.firestore {
         && isValidSiteConfig(incoming())
         && incoming().updatedAt == request.time;
       allow delete: if false;
+    }
+
+    // 8. Discovery Organisations (Admin-Only Internal OS)
+    match /discovery_orgs/{orgId} {
+      allow get: if isValidId(orgId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(orgId)
+        && isAdmin()
+        && isValidDiscoveryOrg(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(orgId)
+        && isAdmin()
+        && isValidDiscoveryOrg(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name',
+          'sector',
+          'size',
+          'operatingModel',
+          'workflowOwners',
+          'workflowsSummary',
+          'status',
+          'updatedAt'
+        ]);
+      allow delete: if isValidId(orgId) && isAdmin();
+    }
+
+    // 9. Venture Opportunities & 100-Point Scorecard (Admin-Only Internal OS)
+    match /venture_opportunities/{oppId} {
+      allow get: if isValidId(oppId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(oppId)
+        && isAdmin()
+        && isValidVentureOpportunity(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(oppId)
+        && isAdmin()
+        && isValidVentureOpportunity(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title',
+          'orgId',
+          'orgName',
+          'category',
+          'intervention',
+          'problemSummary',
+          'validationEvidence',
+          'hasPaidDemandEvidence',
+          'scoreSeverity',
+          'scoreRepeatability',
+          'scoreWtp',
+          'scoreAgentic',
+          'scoreScalability',
+          'scoreFeasibility',
+          'scoreFit',
+          'pipelineStage',
+          'updatedAt'
+        ]);
+      allow delete: if isValidId(oppId) && isAdmin();
     }
   }
 }

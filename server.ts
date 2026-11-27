@@ -1,111 +1,248 @@
-import "dotenv/config";
-import express, { type Request, type Response, type NextFunction } from "express";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
-import { openDatabase } from "./server/database";
-import { MAX_BODY_BYTES, validateInquiry } from "./server/validation";
+import 'dotenv/config';
+import express, { type Request, type Response } from 'express';
+import net from 'node:net';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const PORT = Number(process.env.PORT) || 3000;
-const IS_PROD = process.env.NODE_ENV === "production";
-const DB_PATH = process.env.AJENTIR_DB_PATH || path.resolve(__dirname, "data/ajentir.sqlite");
-const store = openDatabase(DB_PATH);
-const app = express();
-app.disable("x-powered-by");
-app.disable("etag");
-// Trust only the explicitly configured reverse-proxy address. Without this,
-// Express ignores forwarded headers and uses the direct socket address.
-app.set("trust proxy", process.env.AJENTIR_TRUSTED_PROXY || false);
+const IS_PROD = process.env.NODE_ENV === 'production';
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VALID_LANES = new Set(['founder', 'training', 'partner']);
+const VALID_SUBTRACKS = new Set([
+  'investment',
+  'incubation',
+  'discovery',
+  'governance',
+  'workflow',
+  'workshop',
+  'model-provider',
+  'bank',
+  'enterprise',
+]);
 
-app.use((_req: Request, res: Response, next: NextFunction) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
-  if (IS_PROD) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-  next();
-});
+// Simple in-memory sliding window rate limiter for /api/notify
+const rateWindowMs = 15 * 60 * 1000;
+const maxRequestsPerWindow = 10;
+const rateStore = new Map<string, number[]>();
 
-app.get("/api/health", (_req, res) => {
-  res.setHeader("Cache-Control", "no-store");
-  res.json({ ok: true, service: "ajentir-self-hosted-api" });
-});
-
-const windows = new Map<string, { start: number; count: number }>();
-function rateLimit(req: Request, res: Response, next: NextFunction) {
-  // req.ip is the socket peer unless AJENTIR_TRUSTED_PROXY names the exact proxy.
-  const key = req.ip || req.socket.remoteAddress || "unknown";
+function isRateLimited(ip: string): boolean {
   const now = Date.now();
-  let bucket = windows.get(key);
-  if (!bucket || now - bucket.start >= 60_000) {
-    bucket = { start: now, count: 0 };
-    windows.set(key, bucket);
+  const timestamps = (rateStore.get(ip) ?? []).filter((t) => now - t < rateWindowMs);
+  if (timestamps.length >= maxRequestsPerWindow) {
+    rateStore.set(ip, timestamps);
+    return true;
   }
-  bucket.count += 1;
-  if (windows.size > 10_000) {
-    for (const [ip, item] of windows) if (now - item.start >= 60_000) windows.delete(ip);
-  }
-  if (bucket.count > 5) {
-    res.setHeader("Retry-After", "60");
-    res.status(429).json({ error: "Too many requests" });
-    return;
-  }
-  next();
+  timestamps.push(now);
+  rateStore.set(ip, timestamps);
+  return false;
 }
 
-app.post("/api/inquiries", express.json({ limit: MAX_BODY_BYTES, strict: true }), rateLimit, (req, res) => {
-  const payload = validateInquiry(req.body);
-  if (!payload) {
-    res.status(400).json({ error: "Invalid inquiry fields" });
-    return;
-  }
-  if (typeof req.body.websiteUrl === "string" && req.body.websiteUrl.trim()) {
-    res.status(202).json({ ok: true });
-    return;
-  }
-  const now = new Date().toISOString();
-  const id = randomUUID();
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function isSafeExternalWebhook(rawUrl: string): boolean {
   try {
-    store.insertInquiry({
-      ...payload, id, status: "new", stageTag: "", designPartner: "", notes: "",
-      createdAt: now, updatedAt: now,
-    });
-    res.status(201).json({ ok: true, id });
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'https:') return false;
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host.endsWith('.local') ||
+      host === 'metadata.google.internal'
+    ) {
+      return false;
+    }
+    if (net.isIP(host)) {
+      if (
+        host.startsWith('10.') ||
+        host.startsWith('127.') ||
+        host.startsWith('169.254.') ||
+        host.startsWith('192.168.') ||
+        /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+      ) {
+        return false;
+      }
+    }
+    return true;
   } catch {
-    // Never log the inquiry body or personally identifying fields.
-    res.status(503).json({ error: "Could not save inquiry" });
+    return false;
   }
-});
-
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  if (err instanceof SyntaxError || (typeof err === "object" && err !== null && "type" in err && err.type === "entity.too.large")) {
-    res.status(400).json({ error: "Invalid or oversized request" });
-    return;
-  }
-  res.status(500).json({ error: "Internal server error" });
-});
-
-if (!IS_PROD) {
-  const { createServer: createViteServer } = await import("vite");
-  const vite = await createViteServer({ server: { middlewareMode: true }, appType: "spa" });
-  app.use(vite.middlewares);
-} else {
-  const distDir = path.resolve(__dirname, "dist");
-  app.use(express.static(distDir, {
-    dotfiles: "deny", index: false, maxAge: "1h",
-    setHeaders(res, filePath) { if (filePath.endsWith(".html")) res.setHeader("Cache-Control", "no-cache"); },
-  }));
-  app.get("*", (_req, res) => res.sendFile(path.join(distDir, "index.html")));
 }
 
-const httpServer = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Ajentir self-hosted server listening on port ${PORT}`);
-});
-function shutdown() {
-  httpServer.close(() => { store.close(); process.exit(0); });
+interface NotifyPayload {
+  referenceId: string;
+  lane: string;
+  subTrack: string;
+  fullName: string;
+  company: string;
+  email: string;
+  website: string;
+  teamSize: string;
+  message: string;
 }
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+
+function parseNotifyPayload(body: unknown): NotifyPayload | null {
+  if (!body || typeof body !== 'object') return null;
+  const raw = body as Record<string, unknown>;
+
+  const str = (key: string, max: number) =>
+    typeof raw[key] === 'string' ? raw[key].trim().slice(0, max) : '';
+
+  const lane = str('lane', 32);
+  const subTrack = str('subTrack', 40);
+  const fullName = str('fullName', 120);
+  const company = str('company', 140);
+  const email = str('email', 160);
+  const website = str('website', 300);
+  const teamSize = str('teamSize', 40);
+  const message = str('message', 2000);
+  const referenceId = str('referenceId', 64);
+
+  if (!VALID_LANES.has(lane) || !VALID_SUBTRACKS.has(subTrack)) return null;
+  if (!fullName || !EMAIL_PATTERN.test(email)) return null;
+  if (website && !/^https?:\/\//i.test(website)) return null;
+
+  return { referenceId, lane, subTrack, fullName, company, email, website, teamSize, message };
+}
+
+async function dispatchAlerts(payload: NotifyPayload) {
+  const results = { emailSent: false, webhookSent: false };
+
+  const resendKey = process.env.RESEND_API_KEY?.trim();
+  const alertTo = (process.env.ALERT_TO_EMAIL || 'dejawoot99@gmail.com').trim();
+  const alertFrom = (process.env.ALERT_FROM_EMAIL || 'Ajentir Ventures <onboarding@resend.dev>').trim();
+
+  if (resendKey && EMAIL_PATTERN.test(alertTo)) {
+    const html = `
+      <div style="font-family: sans-serif; color: #0B2228; line-height: 1.5;">
+        <h2 style="margin-bottom: 8px;">New Ajentir Ventures Inquiry</h2>
+        <p style="color: #43585D; margin-top: 0;">Lane: <strong>${escapeHtml(payload.lane)}</strong> (${escapeHtml(payload.subTrack)})${payload.referenceId ? ` · Ref ${escapeHtml(payload.referenceId)}` : ''}</p>
+        <p><strong>Name:</strong> ${escapeHtml(payload.fullName)}<br/>
+           <strong>Organisation:</strong> ${escapeHtml(payload.company || 'N/A')}<br/>
+           <strong>Email:</strong> ${escapeHtml(payload.email)}
+           ${payload.teamSize ? `<br/><strong>Leadership Size:</strong> ${escapeHtml(payload.teamSize)}` : ''}
+           ${payload.website ? `<br/><strong>Link:</strong> ${escapeHtml(payload.website)}` : ''}
+        </p>
+        <p><strong>Summary:</strong><br/>${escapeHtml(payload.message || 'No additional message provided.')}</p>
+      </div>
+    `;
+
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: alertFrom,
+          to: [alertTo],
+          reply_to: payload.email,
+          subject: `[AJV ${payload.lane.toUpperCase()}] ${payload.fullName}${payload.company ? ` — ${payload.company}` : ''}`,
+          html,
+        }),
+      });
+      results.emailSent = res.ok;
+
+      if (res.ok && process.env.RESEND_SEND_AUTO_REPLY === 'true') {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: alertFrom,
+            to: [payload.email],
+            subject: 'Ajentir Ventures — Inquiry Received',
+            html: `<p>Hi ${escapeHtml(payload.fullName)},</p><p>Thank you for reaching out to Ajentir Ventures regarding <strong>${escapeHtml(payload.subTrack)}</strong>${payload.referenceId ? ` (Ref: ${escapeHtml(payload.referenceId)})` : ''}. Our team reviews inquiries directly and will reply within two business days.</p><p>Best regards,<br/>Ajentir Ventures</p>`,
+          }),
+        });
+      }
+    } catch {
+      // Non-fatal: inquiry is already safely persisted in Firestore
+    }
+  }
+
+  const webhookUrl = process.env.ALERT_WEBHOOK_URL?.trim();
+  if (webhookUrl && isSafeExternalWebhook(webhookUrl)) {
+    try {
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: `New AJV Inquiry (${payload.lane} · ${payload.subTrack}): ${payload.fullName} (${payload.company || 'Independent'}) — ${payload.email}`,
+          inquiry: payload,
+        }),
+      });
+      results.webhookSent = res.ok;
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  return results;
+}
+
+async function startServer() {
+  const app = express();
+  app.set('trust proxy', true);
+  app.use(express.json({ limit: '32kb' }));
+
+  app.get('/api/health', (_req: Request, res: Response) => {
+    res.json({
+      ok: true,
+      emailAlertsConfigured: Boolean(process.env.RESEND_API_KEY?.trim()),
+      webhookAlertsConfigured: Boolean(process.env.ALERT_WEBHOOK_URL?.trim()),
+    });
+  });
+
+  app.post('/api/notify', async (req: Request, res: Response) => {
+    const clientIp = req.ip || 'unknown';
+    if (isRateLimited(clientIp)) {
+      res.status(429).json({ ok: false, error: 'Too many requests' });
+      return;
+    }
+
+    const payload = parseNotifyPayload(req.body);
+    if (!payload) {
+      res.status(400).json({ ok: false, error: 'Invalid inquiry notification payload' });
+      return;
+    }
+
+    const result = await dispatchAlerts(payload);
+    res.json({ ok: true, ...result });
+  });
+
+  if (!IS_PROD) {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distDir = path.resolve(__dirname, 'dist');
+    app.use(express.static(distDir));
+    app.get('*all', (_req: Request, res: Response) => {
+      res.sendFile(path.join(distDir, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Ajentir Ventures server listening on http://0.0.0.0:${PORT}`);
+  });
+}
+
+void startServer();

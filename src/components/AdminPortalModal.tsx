@@ -40,6 +40,7 @@ import {
   type SiteConfig,
   type StageTag,
 } from '../lib/inquiries';
+import { DiscoveryWorkspace } from './DiscoveryWorkspace';
 
 interface AdminPortalModalProps {
   open: boolean;
@@ -47,7 +48,7 @@ interface AdminPortalModalProps {
   onSiteConfigUpdated?: (config: SiteConfig) => void;
 }
 
-type PortalTab = 'inbox' | 'site' | 'team';
+type PortalTab = 'inbox' | 'discovery' | 'site' | 'team';
 
 const LANE_LABELS: Record<InquiryLane, string> = {
   founder: 'Founders',
@@ -56,6 +57,7 @@ const LANE_LABELS: Record<InquiryLane, string> = {
 };
 
 const SUBTRACK_LABELS: Record<string, string> = {
+  discovery: 'Workflow Discovery',
   investment: 'Venture Investment',
   incubation: 'Idea Incubation',
   governance: 'Governance & Risk',
@@ -351,6 +353,7 @@ export function AdminPortalModal({
               <div className="hidden sm:flex gap-1 p-1 neu-pressed rounded-xl mr-1">
                 {[
                   { id: 'inbox', label: 'Inbox' },
+                  { id: 'discovery', label: 'Discovery OS' },
                   { id: 'site', label: 'Site Updates' },
                   { id: 'team', label: 'Team & Alerts' },
                 ].map((t) => (
@@ -392,11 +395,12 @@ export function AdminPortalModal({
         </div>
 
         {user && isAdmin && (
-          <div className="flex sm:hidden gap-1 p-1 neu-pressed rounded-xl mt-4 shrink-0">
+          <div className="flex sm:hidden gap-1 p-1 neu-pressed rounded-xl mt-4 shrink-0 overflow-x-auto">
             {[
               { id: 'inbox', label: 'Inbox' },
-              { id: 'site', label: 'Site Updates' },
-              { id: 'team', label: 'Team & Alerts' },
+              { id: 'discovery', label: 'Discovery OS' },
+              { id: 'site', label: 'Site' },
+              { id: 'team', label: 'Team' },
             ].map((t) => (
               <button
                 key={t.id}
@@ -770,6 +774,8 @@ export function AdminPortalModal({
                 </div>
               )}
             </div>
+          ) : activeTab === 'discovery' ? (
+            <DiscoveryWorkspace />
           ) : activeTab === 'site' ? (
             <form onSubmit={handleSaveSiteConfig} className="max-w-2xl space-y-5">
               <div>

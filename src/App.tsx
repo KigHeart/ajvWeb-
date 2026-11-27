@@ -15,6 +15,7 @@ import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memor
 import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from './lib/inquiries';
 
 const TRACK_PRESETS: Record<string, InquiryPreset> = {
+  discovery: { lane: 'partner', partnerType: 'discovery' },
   investment: { lane: 'founder', founderTrack: 'investment' },
   incubation: { lane: 'founder', founderTrack: 'incubation' },
   training: { lane: 'training', trainingFocus: 'governance' },
