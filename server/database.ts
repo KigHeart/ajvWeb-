@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import type { InquiryPayload } from "./validation";
 
 export type StoredInquiry = InquiryPayload & {
@@ -78,7 +79,7 @@ export function openDatabase(filename: string) {
       ["venture","elDeer Data Group","Data and scientific systems","active","Scientific and technical data systems."],
     ] as const;
     for (const [kind,title,organisation,status,description] of starter) insertDesk.run({
-      id: crypto.randomUUID(),kind,title,organisation,venture:"",status,owner:"",priority:"normal",
+      id: randomUUID(),kind,title,organisation,venture:"",status,owner:"",priority:"normal",
       score:null,value:null,dueDate:"",description,dataJson:"{}",createdAt:now,updatedAt:now,
     });
   }
