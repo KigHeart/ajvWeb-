@@ -27,7 +27,7 @@ export function validateInquiry(value: unknown): InquiryPayload | null {
   const preferredSession = boundedString(data.preferredSession ?? "", 140);
   const message = boundedString(data.message, 2000);
   if (!subTrack || !TRACKS[lane].includes(subTrack)) return null;
-  if (!fullName || !company || !email) return null;
+  if (!fullName || company === null || !email) return null;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return null;
   if (website === null || teamSize === null || preferredSession === null || message === null) return null;
   if (!TEAM_SIZES.includes(teamSize) || (lane !== "training" && teamSize !== "")) return null;
