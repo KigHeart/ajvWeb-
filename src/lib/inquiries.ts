@@ -11,6 +11,7 @@ import {
   setDoc,
   Timestamp,
   updateDoc,
+  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import type { FounderTrack, InquiryLane, PartnerType, TrainingFocus } from '../data/memorandum';
@@ -74,6 +75,13 @@ export interface AdminInviteRecord {
   displayName: string;
   role: 'admin';
   addedBy: string;
+  createdAt: Date | null;
+}
+
+export interface RegisteredAdminRecord {
+  uid: string;
+  email: string;
+  displayName: string;
   createdAt: Date | null;
 }
 
@@ -335,6 +343,45 @@ export async function removeAdminInvite(email: string): Promise<void> {
     await deleteDoc(doc(db, INVITES_PATH, normalized));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+export function subscribeToRegisteredAdmins(
+  onData: (items: RegisteredAdminRecord[]) => void,
+  onError: (err: Error) => void,
+): Unsubscribe {
+  const q = query(collection(db, ADMINS_PATH), orderBy('createdAt', 'desc'));
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      onData(snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          uid: d.id,
+          email: typeof data.email === 'string' ? data.email : '',
+          displayName: typeof data.displayName === 'string' ? data.displayName : '',
+          createdAt: toDate(data.createdAt),
+        };
+      }));
+    },
+    (error) => {
+      try {
+        handleFirestoreError(error, OperationType.LIST, ADMINS_PATH);
+      } catch (wrapped) {
+        onError(wrapped instanceof Error ? wrapped : new Error(String(wrapped)));
+      }
+    },
+  );
+}
+
+export async function removeRegisteredAdmin(uid: string, email: string): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, ADMINS_PATH, uid));
+  batch.delete(doc(db, INVITES_PATH, email.trim().toLowerCase()));
+  try {
+    await batch.commit();
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `${ADMINS_PATH}/${uid}`);
   }
 }
 

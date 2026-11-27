@@ -62,7 +62,11 @@ test("HTTP API validates, stores, filters and rate-limits inquiries", async (t) 
     message: "CI-only integration test inquiry" };
   const post = (body: unknown) => fetch(`${baseUrl}/api/inquiries`, { method: "POST",
     headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const postRaw = (body: string) => fetch(`${baseUrl}/api/inquiries`, { method: "POST",
+    headers: { "content-type": "application/json" }, body });
 
+  const malformed = await postRaw("{");
+  assert.equal(malformed.status, 400, "malformed JSON should be rejected");
   const invalid = await post({ ...payload, lane: "admin" });
   assert.equal(invalid.status, 400, "invalid inquiry must be rejected");
   const honeypot = await post({ ...payload, websiteUrl: "https://spam.invalid" });
@@ -84,8 +88,7 @@ test("HTTP API validates, stores, filters and rate-limits inquiries", async (t) 
   } finally { database.close(); }
 
   assert.equal((await post(payload)).status, 201);
-  assert.equal((await post(payload)).status, 201);
   const limited = await post(payload);
-  assert.equal(limited.status, 429, "sixth request from the same client must be rate-limited");
+  assert.equal(limited.status, 429, "sixth request, including malformed submissions, must be rate-limited");
   assert.equal(limited.headers.get("retry-after"), "60");
 });

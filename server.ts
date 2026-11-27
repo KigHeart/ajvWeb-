@@ -35,19 +35,27 @@ app.get("/api/health", (_req, res) => {
 });
 
 const windows = new Map<string, { start: number; count: number }>();
+const MAX_RATE_LIMIT_BUCKETS = 10_000;
 function rateLimit(req: Request, res: Response, next: NextFunction) {
   // req.ip is the socket peer unless AJENTIR_TRUSTED_PROXY names the exact proxy.
   const key = req.ip || req.socket.remoteAddress || "unknown";
   const now = Date.now();
   let bucket = windows.get(key);
   if (!bucket || now - bucket.start >= 60_000) {
+    if (!bucket && windows.size >= MAX_RATE_LIMIT_BUCKETS) {
+      for (const [ip, item] of windows) {
+        if (now - item.start >= 60_000) windows.delete(ip);
+      }
+      // Keep memory bounded even if many unique peers arrive within one window.
+      if (windows.size >= MAX_RATE_LIMIT_BUCKETS) {
+        const oldestKey = windows.keys().next().value;
+        if (oldestKey !== undefined) windows.delete(oldestKey);
+      }
+    }
     bucket = { start: now, count: 0 };
     windows.set(key, bucket);
   }
   bucket.count += 1;
-  if (windows.size > 10_000) {
-    for (const [ip, item] of windows) if (now - item.start >= 60_000) windows.delete(ip);
-  }
   if (bucket.count > 5) {
     res.setHeader("Retry-After", "60");
     res.status(429).json({ error: "Too many requests" });
@@ -56,7 +64,8 @@ function rateLimit(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-app.post("/api/inquiries", express.json({ limit: MAX_BODY_BYTES, strict: true }), rateLimit, (req, res) => {
+// Count malformed and oversized submissions before parsing their bodies.
+app.post("/api/inquiries", rateLimit, express.json({ limit: MAX_BODY_BYTES, strict: true }), (req, res) => {
   const payload = validateInquiry(req.body);
   if (!payload) {
     res.status(400).json({ error: "Invalid inquiry fields" });
