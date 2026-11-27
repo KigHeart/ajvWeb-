@@ -25,10 +25,8 @@ async function waitForServer(child: ChildProcess, url: string): Promise<void> {
   let lastError: unknown;
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error(`Server exited early with code ${child.exitCode}`);
-    try {
-      const response = await fetch(`${url}/api/health`);
-      if (response.ok) return;
-    } catch (error) { lastError = error; }
+    try { const response = await fetch(`${url}/api/health`); if (response.ok) return; }
+    catch (error) { lastError = error; }
     await delay(150);
   }
   throw new Error(`Server did not become healthy: ${String(lastError)}`);
@@ -59,21 +57,16 @@ test("HTTP API validates, stores, filters and rate-limits inquiries", async (t) 
   assert.equal(health.headers.get("cache-control"), "no-store");
   assert.equal(health.headers.get("x-content-type-options"), "nosniff");
 
-  const payload = {
-    lane: "founder", subTrack: "investment", fullName: "Integration Test",
-    company: "", email: "INTEGRATION@example.com", website: "", teamSize: "",
-    preferredSession: "", message: "CI-only integration test inquiry",
-  };
-  const post = (body: unknown) => fetch(`${baseUrl}/api/inquiries`, {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
-  });
+  const payload = { lane: "founder", subTrack: "investment", fullName: "Integration Test", company: "",
+    email: "INTEGRATION@example.com", website: "", teamSize: "", preferredSession: "",
+    message: "CI-only integration test inquiry" };
+  const post = (body: unknown) => fetch(`${baseUrl}/api/inquiries`, { method: "POST",
+    headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
   const invalid = await post({ ...payload, lane: "admin" });
   assert.equal(invalid.status, 400, "invalid inquiry must be rejected");
-
   const honeypot = await post({ ...payload, websiteUrl: "https://spam.invalid" });
   assert.equal(honeypot.status, 202, "honeypot submissions should be quietly accepted");
-
   const accepted = await post(payload);
   assert.equal(accepted.status, 201, "valid inquiry should be stored");
   const acceptedBody = await accepted.json() as { ok: boolean; id: string };
@@ -90,12 +83,8 @@ test("HTTP API validates, stores, filters and rate-limits inquiries", async (t) 
     assert.equal(records[0].message, "CI-only integration test inquiry");
   } finally { database.close(); }
 
-  const second = await post(payload);
-  assert.equal(second.status, 201);
-  const third = await post(payload);
-  assert.equal(third.status, 201);
-  const fourth = await post(payload);
-  assert.equal(fourth.status, 201);
+  assert.equal((await post(payload)).status, 201);
+  assert.equal((await post(payload)).status, 201);
   const limited = await post(payload);
   assert.equal(limited.status, 429, "sixth request from the same client must be rate-limited");
   assert.equal(limited.headers.get("retry-after"), "60");
