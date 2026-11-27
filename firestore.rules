@@ -37,13 +37,20 @@ service cloud.firestore {
     function isInvitedAdmin() {
       return isSignedIn()
         && request.auth.token.email is string
-        && exists(/databases/$(database)/documents/admin_invites/$(request.auth.token.email));
+        && exists(/databases/$(database)/documents/admin_invites/$(request.auth.token.email))
+        && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/admin_invites/$(request.auth.token.email)).data.role == 'admin';
+    }
+
+    function isRegisteredAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
     }
 
     function isAdmin() {
-      return isBootstrappedAdmin()
-        || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)))
-        || isInvitedAdmin();
+      return isBootstrappedAdmin() || isRegisteredAdmin() || isInvitedAdmin();
     }
 
     function isValidLanePair(lane, subTrack) {
@@ -263,7 +270,9 @@ service cloud.firestore {
           && isValidId(activityId)
           && isAdmin()
           && exists(/databases/$(database)/documents/inquiries/$(inquiryId));
-        allow list: if isValidId(inquiryId) && isAdmin();
+        allow list: if isValidId(inquiryId)
+          && isAdmin()
+          && exists(/databases/$(database)/documents/inquiries/$(inquiryId));
         allow create: if isValidId(inquiryId)
           && isValidId(activityId)
           && isAdmin()
