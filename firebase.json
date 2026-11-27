@@ -1,7 +1,7 @@
 {
   "firestore": [
     {
-      "database": "ai-studio-ajentirventures-2ebec-4fbc-9fec-657d316d2e78",
+      "database": "ai-studio-ajentirventures-2eb91923-b1ec-4fbc-9fec-657d316d2e78",
       "rules": "firestore.rules"
     }
   ],
