@@ -39,6 +39,10 @@ jobs:
         run: npm run test:server
       - name: Build site
         run: npm run build
+      - name: Build production server bundle
+        run: npm run build:server
+      - name: Build self-hosted production image
+        run: docker build --tag ajentir-self-hosted:ci .
 
   deploy:
     if: github.event_name != 'pull_request'
