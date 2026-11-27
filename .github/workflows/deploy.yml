@@ -36,6 +36,8 @@ jobs:
       - name: Firestore security rules tests
         run: npm run test:rules
       - name: Build site
+        env:
+          VITE_RECAPTCHA_SITE_KEY: ${{ vars.VITE_RECAPTCHA_SITE_KEY }}
         run: npm run build
 
   deploy:
