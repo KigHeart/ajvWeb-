@@ -6,6 +6,7 @@ import {
 
 export const ADMIN_SESSION_TTL_SECONDS = 8 * 60 * 60;
 export const ADMIN_COOKIE_NAME = "ajentir_admin_session";
+export const ADMIN_PROD_COOKIE_NAME = "__Host-ajentir_admin_session";
 const TOKEN_PATTERN = /^[a-f0-9]{64}$/;
 
 export function verifyAdminPassword(candidate: unknown, configured: string | undefined): boolean {
@@ -28,26 +29,27 @@ export function createCsrfToken(): string {
   return randomBytes(32).toString("hex");
 }
 
-export function readSessionCookie(cookieHeader: string | undefined): string | null {
+export function readSessionCookie(cookieHeader: string | undefined, production = false): string | null {
   if (!cookieHeader) return null;
+  const expectedName = production ? ADMIN_PROD_COOKIE_NAME : ADMIN_COOKIE_NAME;
   for (const part of cookieHeader.split(";")) {
     const separator = part.indexOf("=");
     if (separator < 0) continue;
     const name = part.slice(0, separator).trim();
     const value = part.slice(separator + 1).trim();
-    if (name === ADMIN_COOKIE_NAME && TOKEN_PATTERN.test(value)) return value;
+    if (name === expectedName && TOKEN_PATTERN.test(value)) return value;
   }
   return null;
 }
 
 export function sessionCookie(token: string, production: boolean): string {
   if (!TOKEN_PATTERN.test(token)) throw new Error("Invalid session token");
-  const name = production ? "__Host-ajentir_admin_session" : ADMIN_COOKIE_NAME;
+  const name = production ? ADMIN_PROD_COOKIE_NAME : ADMIN_COOKIE_NAME;
   return `${name}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${ADMIN_SESSION_TTL_SECONDS}${production ? "; Secure" : ""}`;
 }
 
 export function clearSessionCookie(production: boolean): string {
-  const name = production ? "__Host-ajentir_admin_session" : ADMIN_COOKIE_NAME;
+  const name = production ? ADMIN_PROD_COOKIE_NAME : ADMIN_COOKIE_NAME;
   return `${name}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${production ? "; Secure" : ""}`;
 }
 
