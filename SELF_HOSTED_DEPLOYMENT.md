@@ -23,7 +23,7 @@ npm run build
 npm run dev
 ```
 
-Open http://localhost:3000. The database is created automatically at `data/ajentir.sqlite`.
+To route the public inquiry form to SQLite, set `VITE_INQUIRY_TRANSPORT=self-hosted` in your local `.env` before starting the server. The default is the existing Firebase transport; the GitHub Pages build must keep that default because Pages cannot host the API. Open http://localhost:3000. The database is created automatically at `data/ajentir.sqlite`.
 
 ## Run as a self-hosted production service
 

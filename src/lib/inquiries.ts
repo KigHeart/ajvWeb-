@@ -47,6 +47,7 @@ export interface CreateInquiryInput {
   teamSize: TeamSizeOption;
   preferredSession?: string;
   message: string;
+  honeypot?: string;
 }
 
 export interface InquiryRecord {
@@ -96,6 +97,19 @@ const PUBLIC_CONFIG_COLLECTION = 'public_config';
 const PUBLIC_CONFIG_DOC = 'site';
 
 export async function submitInquiry(input: CreateInquiryInput): Promise<{ id: string }> {
+  if (import.meta.env.VITE_INQUIRY_TRANSPORT === 'self-hosted') {
+    const response = await fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...input, websiteUrl: input.honeypot ?? '' }),
+    });
+    const result: unknown = await response.json().catch(() => null);
+    if (!response.ok || !result || typeof result !== 'object' || !('id' in result) || typeof result.id !== 'string') {
+      throw new Error('Self-hosted inquiry submission failed.');
+    }
+    return { id: result.id };
+  }
+
   const fullName = input.fullName.trim().slice(0, PAYLOAD_LIMITS.fullNameMax);
   const company = input.company.trim().slice(0, PAYLOAD_LIMITS.companyMax);
   const email = input.email.trim().slice(0, PAYLOAD_LIMITS.emailMax);

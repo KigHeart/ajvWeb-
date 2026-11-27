@@ -29,3 +29,9 @@ test("does not retain website values outside founder inquiries", () => {
   assert.ok(result);
   assert.equal(result.website, "");
 });
+
+test("accepts an omitted optional organisation name", () => {
+  const result = validateInquiry({ ...valid, company: "" });
+  assert.ok(result);
+  assert.equal(result.company, "");
+});

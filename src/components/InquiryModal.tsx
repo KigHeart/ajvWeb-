@@ -135,6 +135,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
         website,
         teamSize: lane === 'training' ? teamSize : '',
         message,
+        honeypot,
       });
 
       setSubmittedName(trimmedName);
