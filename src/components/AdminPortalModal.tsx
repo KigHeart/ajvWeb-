@@ -29,11 +29,14 @@ import {
   exportInquiriesToCsv,
   fetchSiteConfig,
   removeAdminInvite,
+  removeRegisteredAdmin,
   saveSiteConfig,
   subscribeToAdminInvites,
+  subscribeToRegisteredAdmins,
   subscribeToInquiries,
   updateInquiryTriage,
   type AdminInviteRecord,
+  type RegisteredAdminRecord,
   type IncubationStatus,
   type InquiryRecord,
   type InquiryStatus,
@@ -137,6 +140,8 @@ export function AdminPortalModal({
 
   // Team invitation state
   const [invites, setInvites] = useState<AdminInviteRecord[]>([]);
+  const [registeredAdmins, setRegisteredAdmins] = useState<RegisteredAdminRecord[]>([]);
+  const [teamError, setTeamError] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteError, setInviteError] = useState('');
@@ -160,6 +165,8 @@ export function AdminPortalModal({
       setIsAdmin(false);
       setInquiries([]);
       setInvites([]);
+      setRegisteredAdmins([]);
+      setTeamError('');
       setLoadingInquiries(false);
       setSelectedId(null);
 
@@ -219,6 +226,15 @@ export function AdminPortalModal({
         (items) => setInvites(items),
         () => undefined,
       );
+      const unsubscribeAdmins = subscribeToRegisteredAdmins(
+        (items) => setRegisteredAdmins(items),
+        () => setTeamError('Unable to load registered administrators.'),
+      );
+      return () => {
+        unsubscribeInquiries();
+        unsubscribeInvites();
+        unsubscribeAdmins();
+      };
     }
 
     return () => {
@@ -314,6 +330,15 @@ export function AdminPortalModal({
       setConfigError('Failed to update live site configuration.');
     } finally {
       setSavingConfig(false);
+    }
+  };
+
+  const handleRemoveRegisteredAdmin = async (uid: string) => {
+    setTeamError('');
+    try {
+      await removeRegisteredAdmin(uid);
+    } catch {
+      setTeamError('Unable to revoke registered administrator access.');
     }
   };
 
@@ -945,7 +970,12 @@ export function AdminPortalModal({
                       </button>
                     </form>
 
+                    {teamError && (
+                      <p role="alert" className="text-xs font-medium text-[#9A3412]">{teamError}</p>
+                    )}
+
                     <div className="space-y-2">
+                      <h5 className="text-xs font-semibold text-[#0B2228]">Pending invitations</h5>
                       {invites.length === 0 ? (
                         <p className="text-xs text-[#43585D]">
                           No additional team members authorized yet.
@@ -965,6 +995,32 @@ export function AdminPortalModal({
                             <button
                               type="button"
                               onClick={() => void removeAdminInvite(inv.email)}
+                              className="text-xs font-medium text-[#9A3412] hover:underline shrink-0 cursor-pointer"
+                            >
+                              Revoke
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="space-y-2 pt-3 border-t border-[#CBD5D6]">
+                      <h5 className="text-xs font-semibold text-[#0B2228]">Registered administrators</h5>
+                      <p className="text-[11px] text-[#43585D]">
+                        Removing a registered administrator revokes access even if an older invitation also exists.
+                      </p>
+                      {registeredAdmins.length === 0 ? (
+                        <p className="text-xs text-[#43585D]">No separately registered administrators.</p>
+                      ) : (
+                        registeredAdmins.map((admin) => (
+                          <div key={admin.uid} className="neu-raised-sm rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-[#0B2228] truncate">{admin.displayName}</p>
+                              <p className="text-[11px] text-[#43585D] truncate">{admin.email}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void handleRemoveRegisteredAdmin(admin.uid)}
                               className="text-xs font-medium text-[#9A3412] hover:underline shrink-0 cursor-pointer"
                             >
                               Revoke
