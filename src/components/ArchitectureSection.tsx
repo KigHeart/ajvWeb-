@@ -21,7 +21,7 @@ export function ArchitectureSection({ onSelectOffering }: ArchitectureSectionPro
               className="font-display text-2xl sm:text-3xl lg:text-[2.25rem] font-semibold text-[#0B2228] leading-[1.2] tracking-[-0.025em] max-w-[32ch]"
               style={{ textWrap: 'balance' }}
             >
-              Enterprise agentic AI built for the SMEs most providers overlook.
+              Backing and building agentic AI companies for the SMEs most providers overlook.
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
