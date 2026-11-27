@@ -3,7 +3,7 @@ import express, { type Request, type Response, type NextFunction } from "express
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID, timingSafeEqual } from "node:crypto";
-import { openDatabase, type DeskKind, type DeskItem } from "./server/database";
+import { openDatabase, type DeskKind, type DeskItem, type DeskInput } from "./server/database";
 import { MAX_BODY_BYTES, validateInquiry } from "./server/validation";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -67,7 +67,7 @@ function deskAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 function validKind(value: unknown): value is DeskKind { return typeof value === "string" && DESK_KINDS.includes(value as DeskKind); }
-function cleanDeskInput(body: unknown): Record<string, unknown> | null {
+function cleanDeskInput(body: unknown): DeskInput | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   const source = body as Record<string, unknown>;
   const result: Record<string, unknown> = {};
@@ -87,7 +87,7 @@ function cleanDeskInput(body: unknown): Record<string, unknown> | null {
     if (!source.data || typeof source.data !== "object" || Array.isArray(source.data) || JSON.stringify(source.data).length > 8000) return null;
     result.data = source.data;
   }
-  return result;
+  return result as DeskInput;
 }
 app.use("/api/venture-desk", express.json({ limit: "16kb", strict: true }), deskAuth);
 app.get("/api/venture-desk", (req, res) => {
