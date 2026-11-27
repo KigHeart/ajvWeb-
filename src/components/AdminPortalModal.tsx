@@ -335,10 +335,16 @@ export function AdminPortalModal({
 
   const handleRemoveRegisteredAdmin = async (uid: string) => {
     setTeamError('');
+    const admin = registeredAdmins.find((item) => item.uid === uid);
+    if (!admin) return;
     try {
-      await removeRegisteredAdmin(uid);
+      // Remove both possible grants: the UID registration and any email invite.
+      await Promise.all([
+        removeRegisteredAdmin(uid),
+        removeAdminInvite(admin.email),
+      ]);
     } catch {
-      setTeamError('Unable to revoke registered administrator access.');
+      setTeamError('Unable to fully revoke administrator access. Check both the registered roster and invitations.');
     }
   };
 
