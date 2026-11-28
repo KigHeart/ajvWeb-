@@ -5,6 +5,7 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { openDatabase } from "./server/database";
+import { createVentureDeskRouter } from "./server/ventureDeskRouter";
 import {
   EMAIL_REGEX,
   isValidId,
@@ -259,6 +260,8 @@ function requireOwner(req: AuthenticatedRequest, res: Response, next: NextFuncti
 async function startServer() {
   const store = openDatabase(DB_PATH);
   const app = express();
+  const ventureDesk = createVentureDeskRouter();
+  app.use("/api/venture-desk", ventureDesk.router);
 
   const trustedProxy = process.env.AJENTIR_TRUSTED_PROXY?.trim();
   app.set("trust proxy", trustedProxy || true);
@@ -724,6 +727,7 @@ async function startServer() {
   const shutdown = () => {
     server.close(() => {
       store.close();
+      ventureDesk.close();
       process.exit(0);
     });
   };

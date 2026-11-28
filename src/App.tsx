@@ -13,6 +13,8 @@ import { MandateSection } from './components/MandateSection';
 import { ProgramBriefModal } from './components/ProgramBriefModal';
 import { ResearchModal } from './components/ResearchModal';
 import { ResearchSection } from './components/ResearchSection';
+import { WorkflowDiscoverySection } from './components/WorkflowDiscoverySection';
+import { VentureDesk } from './components/VentureDesk';
 import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memorandum';
 import { BASELINE_RESEARCH_NOTES, type ResearchNote } from './data/research';
 import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from './lib/inquiries';
@@ -20,6 +22,7 @@ import { fetchPublishedResearchNotes } from './lib/research';
 
 const TRACK_PRESETS: Record<string, InquiryPreset> = {
   discovery: { lane: 'partner', partnerType: 'discovery' },
+  workflow: { lane: 'training', trainingFocus: 'workflow' },
   investment: { lane: 'founder', founderTrack: 'investment' },
   incubation: { lane: 'founder', founderTrack: 'incubation' },
   training: { lane: 'training', trainingFocus: 'governance' },
@@ -28,6 +31,11 @@ const TRACK_PRESETS: Record<string, InquiryPreset> = {
 };
 
 export default function App() {
+  const isDesk = window.location.pathname.endsWith('/venture-desk') || new URLSearchParams(window.location.search).get('view') === 'venture-desk';
+  return isDesk ? <VentureDesk /> : <AjentirSite />;
+}
+
+function AjentirSite() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryPreset, setInquiryPreset] = useState<InquiryPreset | null>(null);
   const [activeOffering, setActiveOffering] = useState<OfferingItem | null>(null);
@@ -101,6 +109,7 @@ export default function App() {
           <main id="main-content">
             <HeroSection onOpenInquiry={() => openInquiry(null)} />
             <ArchitectureSection onSelectOffering={(offering) => setActiveOffering(offering)} />
+            <WorkflowDiscoverySection onOpenInquiry={(preset) => openInquiry(preset)} />
             <MandateSection />
             <FundISection onOpenInquiry={(preset) => openInquiry(preset)} />
             <ResearchSection

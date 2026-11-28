@@ -7,9 +7,10 @@ interface HeaderProps {
 
 const NAV_LINKS = [
   { id: 'what-we-do', label: 'What We Do', href: '#what-we-do' },
+  { id: 'venture-discovery', label: 'Venture Discovery', href: '#venture-discovery' },
+  { id: 'venture-desk', label: 'Venture Desk', href: `${import.meta.env.BASE_URL}?view=venture-desk` },
   { id: 'focus', label: 'Focus', href: '#focus' },
   { id: 'approach', label: 'Approach', href: '#approach' },
-  { id: 'research', label: 'Research', href: '#research' },
 ];
 
 export function Header({ onOpenInquiry }: HeaderProps) {
