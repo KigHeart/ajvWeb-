@@ -5,7 +5,7 @@ export type InquiryPayload = {
 };
 const TRACKS: Record<InquiryPayload["lane"], readonly string[]> = {
   founder: ["investment", "incubation"], training: ["governance", "workflow", "workshop"],
-  partner: ["model-provider", "bank", "enterprise"],
+  partner: ["discovery", "model-provider", "bank", "enterprise"],
 };
 const TEAM_SIZES = ["", "1-10 leaders", "11-30 leaders", "30+ leaders"];
 function boundedString(value: unknown, max: number): string | null {

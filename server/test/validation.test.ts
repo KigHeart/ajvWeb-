@@ -35,3 +35,8 @@ test("accepts an omitted optional organisation name", () => {
   assert.ok(result);
   assert.equal(result.company, "");
 });
+test("accepts the Workflow Discovery partner track offered by the form", () => {
+  const result = validateInquiry({ ...valid, lane: "partner", subTrack: "discovery", website: "" });
+  assert.ok(result);
+  assert.equal(result.subTrack, "discovery");
+});

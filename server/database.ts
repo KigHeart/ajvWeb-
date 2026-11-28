@@ -95,3 +95,5 @@ export function openDatabase(filename: string) {
     close() { db.close(); },
   };
 }
+
+export type InquiryDatabase = ReturnType<typeof openDatabase>;
