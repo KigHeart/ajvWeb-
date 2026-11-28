@@ -41,6 +41,12 @@ jobs:
         run: npm run build
       - name: Build production server bundle
         run: npm run build:server
+
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Build self-hosted production image
         run: docker build --tag ajentir-self-hosted:ci .
 
