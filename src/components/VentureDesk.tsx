@@ -17,11 +17,12 @@ const STATUS:Record<Kind,string[]>={venture:["active","incubating","paused","exi
 const EMPTY={title:"",description:"",organisation:"",venture:"",status:"",owner:"",priority:"normal",score:"",value:"",dueDate:""};
 function money(value:number|null){return value===null?"—":new Intl.NumberFormat("en-KE",{style:"currency",currency:"KES",maximumFractionDigits:0}).format(value);}
 function date(value:string){return value?new Date(value).toLocaleDateString("en-KE",{day:"numeric",month:"short",year:"numeric"}):"No due date";}
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
 async function api(key:string,path:string,init:RequestInit={}) {
   const headers=new Headers(init.headers);
   headers.set("Content-Type","application/json");
   headers.set("Authorization","Bearer "+key);
-  const response=await fetch("/api/venture-desk"+path,{...init,headers});
+  const response=await fetch(API_BASE_URL+"/api/venture-desk"+path,{...init,headers});
   if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.error||"Request failed ("+response.status+")");}
   return response.status===204?null:response.json();
 }
