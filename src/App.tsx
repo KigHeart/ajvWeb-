@@ -31,7 +31,8 @@ const TRACK_PRESETS: Record<string, InquiryPreset> = {
 };
 
 export default function App() {
-  return window.location.pathname === '/venture-desk' ? <VentureDesk /> : <AjentirSite />;
+  const isDesk = window.location.pathname.endsWith('/venture-desk') || new URLSearchParams(window.location.search).get('view') === 'venture-desk';
+  return isDesk ? <VentureDesk /> : <AjentirSite />;
 }
 
 function AjentirSite() {
