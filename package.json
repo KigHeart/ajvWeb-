@@ -13,7 +13,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test:rules": "firebase emulators:exec --only firestore --project demo-ajentir-security \"tsx --test firestore.rules.test.ts\"",
-    "test:server": "tsx --test server/test/*.test.ts"
+    "test:server": "tsx --test server/test/*.test.ts",
+    "test:agent": "tsx --test agent/test/*.test.ts"
   },
   "dependencies": {
     "@firebase/eslint-plugin-security-rules": "^0.0.2",

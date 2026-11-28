@@ -37,6 +37,8 @@ jobs:
         run: npm run test:rules
       - name: Self-hosted backend tests
         run: npm run test:server
+      - name: Agent service tests
+        run: npm run test:agent
       - name: Build site
         run: npm run build
       - name: Build production server bundle
