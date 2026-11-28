@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { openDatabase, type DeskItem } from "../database";
+import { openDatabase, type DeskItem } from "../ventureDeskDatabase";
 
 test("Venture Desk seeds the founder's cross-venture portfolio once", () => {
   const dir = mkdtempSync(path.join(os.tmpdir(), "venture-desk-"));
