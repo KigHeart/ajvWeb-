@@ -50,16 +50,12 @@ jobs:
       - name: Build self-hosted production image
         run: docker build --tag ajentir-self-hosted:ci .
 
-  deploy:
+  build-pages:
     if: github.event_name != 'pull_request'
     needs: verify
     permissions:
       contents: read
       pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Setup Pages
@@ -74,10 +70,23 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Build site
         run: npm run build
-      - name: Upload artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build-pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
