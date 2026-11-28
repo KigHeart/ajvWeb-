@@ -11,12 +11,18 @@ import { InquiryModal } from './components/InquiryModal';
 import { LegalModal } from './components/LegalModal';
 import { MandateSection } from './components/MandateSection';
 import { ProgramBriefModal } from './components/ProgramBriefModal';
+import { ResearchModal } from './components/ResearchModal';
+import { ResearchSection } from './components/ResearchSection';
 import { WorkflowDiscoverySection } from './components/WorkflowDiscoverySection';
 import { VentureDesk } from './components/VentureDesk';
 import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memorandum';
+import { BASELINE_RESEARCH_NOTES, type ResearchNote } from './data/research';
 import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from './lib/inquiries';
+import { fetchPublishedResearchNotes } from './lib/research';
 
 const TRACK_PRESETS: Record<string, InquiryPreset> = {
+  discovery: { lane: 'partner', partnerType: 'discovery' },
+  workflow: { lane: 'training', trainingFocus: 'workflow' },
   investment: { lane: 'founder', founderTrack: 'investment' },
   incubation: { lane: 'founder', founderTrack: 'incubation' },
   training: { lane: 'training', trainingFocus: 'governance' },
@@ -32,6 +38,8 @@ function AjentirSite() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryPreset, setInquiryPreset] = useState<InquiryPreset | null>(null);
   const [activeOffering, setActiveOffering] = useState<OfferingItem | null>(null);
+  const [activeResearch, setActiveResearch] = useState<ResearchNote | null>(null);
+  const [researchNotes, setResearchNotes] = useState<ResearchNote[]>(BASELINE_RESEARCH_NOTES);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [portalOpen, setPortalOpen] = useState(false);
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
@@ -41,8 +49,13 @@ function AjentirSite() {
     setInquiryOpen(true);
   };
 
+  const refreshResearch = () => {
+    void fetchPublishedResearchNotes().then(setResearchNotes);
+  };
+
   useEffect(() => {
     void fetchSiteConfig().then(setSiteConfig);
+    refreshResearch();
   }, []);
 
   useEffect(() => {
@@ -63,6 +76,7 @@ function AjentirSite() {
       if (e.key === 'Escape') {
         setInquiryOpen(false);
         setActiveOffering(null);
+        setActiveResearch(null);
         setPrivacyOpen(false);
         setPortalOpen(false);
       }
@@ -97,6 +111,10 @@ function AjentirSite() {
             <WorkflowDiscoverySection onOpenInquiry={(preset) => openInquiry(preset)} />
             <MandateSection />
             <FundISection onOpenInquiry={(preset) => openInquiry(preset)} />
+            <ResearchSection
+              notes={researchNotes}
+              onSelectNote={(note) => setActiveResearch(note)}
+            />
           </main>
 
           <ContactFooter
@@ -115,6 +133,12 @@ function AjentirSite() {
             }}
           />
 
+          <ResearchModal
+            note={activeResearch}
+            onClose={() => setActiveResearch(null)}
+            onInquire={(preset) => openInquiry(preset)}
+          />
+
           <InquiryModal
             open={inquiryOpen}
             preset={inquiryPreset}
@@ -127,6 +151,7 @@ function AjentirSite() {
             open={portalOpen}
             onClose={() => setPortalOpen(false)}
             onSiteConfigUpdated={(nextConfig) => setSiteConfig(nextConfig)}
+            onResearchUpdated={refreshResearch}
           />
         </div>
       </MotionConfig>
