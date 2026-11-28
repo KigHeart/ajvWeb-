@@ -1,10 +1,7 @@
 import express, { type Request, type Response, type NextFunction } from "express";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { openDatabase, type DeskKind, type DeskInput } from "./ventureDeskDatabase";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const KINDS: DeskKind[] = ["venture", "opportunity", "task", "evidence", "organisation"];
 const MAX_TEXT: Record<string, number> = {
   title: 180, organisation: 180, venture: 180, status: 40, owner: 120,
@@ -63,7 +60,7 @@ function cleanInput(body: unknown): DeskInput | null {
 }
 
 export function createVentureDeskRouter() {
-  const dbPath = process.env.VENTURE_DESK_DB_PATH?.trim() || path.resolve(__dirname, "../data/venture-desk.sqlite");
+  const dbPath = process.env.VENTURE_DESK_DB_PATH?.trim() || "data/venture-desk.sqlite";
   const store = openDatabase(dbPath);
   const router = express.Router();
   router.use(express.json({ limit: "16kb", strict: true }));
