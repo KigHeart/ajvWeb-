@@ -9,12 +9,6 @@ interface FundISectionProps {
 
 const APPROACH_SLIDES = [
   {
-    id: 'workflow-discovery',
-    kicker: 'Workflow Discovery',
-    headline: 'Inside real operations, before software.',
-    body: 'We examine how people, tasks, and payments actually move inside organisations—uncovering repeatable bottlenecks that can grow into independent agentic AI companies.',
-  },
-  {
     id: 'sme-gap',
     kicker: 'Underserved SMEs',
     headline: 'Automating everyday enterprise work.',
@@ -25,6 +19,12 @@ const APPROACH_SLIDES = [
     kicker: 'Governance & Incubation',
     headline: 'Readiness for executives, demand for builders.',
     body: 'We equip SME leaders to govern shadow AI safely while pairing incubated builders with early design partners before spinout.',
+  },
+  {
+    id: 'workflow-discovery',
+    kicker: 'Workflow-to-Venture Discovery',
+    headline: 'Find validated demand before building.',
+    body: 'We map real SME and enterprise workflows to uncover repeatable problems, redesign opportunities, and new markets for agentic software—then connect validated demand with builders and design partners.',
   },
   {
     id: 'partners',
@@ -40,13 +40,8 @@ const ECOSYSTEM_NODES: {
   preset: InquiryPreset;
 }[] = [
   {
-    title: 'Organisations',
-    role: 'Operational workflow discovery and design-partner pilots',
-    preset: { lane: 'partner', partnerType: 'discovery' },
-  },
-  {
     title: 'Founders & Builders',
-    role: 'Capital and demand-backed venture incubation',
+    role: 'Capital and demand-backed incubation',
     preset: { lane: 'founder', founderTrack: 'incubation' },
   },
   {
@@ -55,9 +50,14 @@ const ECOSYSTEM_NODES: {
     preset: { lane: 'training', trainingFocus: 'governance' },
   },
   {
-    title: 'Banks & Model Labs',
-    role: 'Regulated sandboxes and pooled inference credits',
+    title: 'Commercial Banks',
+    role: 'Regulated sandbox pilots and underwriting',
     preset: { lane: 'partner', partnerType: 'bank' },
+  },
+  {
+    title: 'AI Model Providers',
+    role: 'Pooled compute credits and SME distribution',
+    preset: { lane: 'partner', partnerType: 'model-provider' },
   },
 ];
 
