@@ -7,7 +7,7 @@ import type {
   PartnerType,
   TrainingFocus,
 } from '../data/memorandum';
-import { EMAIL_PATTERN, PAYLOAD_LIMITS } from '../lib/firebase';
+import { EMAIL_PATTERN, PAYLOAD_LIMITS } from '../lib/validation';
 import { submitInquiry, type InquirySubTrack, type TeamSizeOption } from '../lib/inquiries';
 
 interface InquiryModalProps {
@@ -50,8 +50,9 @@ const TEAM_SIZE_OPTIONS: { id: Exclude<TeamSizeOption, ''>; label: string }[] = 
 ];
 
 const PARTNER_TYPES: { id: PartnerType; label: string }[] = [
-  { id: 'model-provider', label: 'AI Model Provider' },
+  { id: 'discovery', label: 'Workflow Discovery' },
   { id: 'bank', label: 'Bank / FI' },
+  { id: 'model-provider', label: 'AI Model Provider' },
   { id: 'enterprise', label: 'Enterprise Network' },
 ];
 
@@ -160,14 +161,7 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
     onClose();
   };
 
-  const activeCopy =
-    lane === 'training' && trainingFocus === 'workflow'
-      ? {
-          prompt: 'Which workflow should we examine?',
-          placeholder:
-            'Describe how the work is done today, the people and systems involved, where delays or errors occur, and how often the process is repeated...',
-        }
-      : LANE_COPY[lane];
+  const activeCopy = LANE_COPY[lane];
 
   const getTrackSummaryLabel = () => {
     if (lane === 'founder') {
@@ -175,7 +169,6 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
       return `Founders · ${found?.label ?? 'Investment'}`;
     }
     if (lane === 'training') {
-      if (trainingFocus === 'workflow') return 'Organisation · Workflow Discovery';
       const found = TRAINING_FOCUSES.find((t) => t.id === trainingFocus);
       return `Executive Training · ${found?.label ?? 'Briefing'}`;
     }
@@ -190,9 +183,6 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
         : 'Our investment team reviews every submission directly and replies within two business days regarding next steps.';
     }
     if (lane === 'training') {
-      if (trainingFocus === 'workflow') {
-        return 'We will review the workflow you describe and follow up within two business days to discuss a discovery session. The aim is to understand the operational problem and assess whether it points to a repeatable opportunity for agentic software.';
-      }
       return 'We will share available executive briefing dates and a concise syllabus tailored to your leadership team within two business days.';
     }
     return 'Our partnerships lead will respond within two business days to schedule an introductory discussion on sandbox or ecosystem collaboration.';
@@ -386,9 +376,9 @@ export function InquiryModal({ open, preset, onClose }: InquiryModalProps) {
               {lane === 'partner' && (
                 <div>
                   <span className="block text-xs font-semibold text-[#0B2228] mb-1.5">
-                    Partner Type
+                    Collaboration Type
                   </span>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {PARTNER_TYPES.map((opt) => {
                       const active = partnerType === opt.id;
                       return (
