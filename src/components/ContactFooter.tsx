@@ -22,11 +22,10 @@ export function ContactFooter({
                 className="font-display text-2xl sm:text-4xl font-semibold text-[#0B2228] tracking-[-0.03em] leading-[1.08] mb-3"
                 style={{ textWrap: 'balance' }}
               >
-                Building, training, or partnering in agentic AI?
+                Building, discovering, or deploying agentic AI?
               </h2>
               <p className="text-sm sm:text-base text-[#43585D]">
-                Reach out regarding workflow discovery, investment, incubation, executive training,
-                or partnerships.
+                Bring us an operational challenge, an agentic AI venture, or a partnership opportunity. We connect real workflow demand with technical builders, incubation and investment.
               </p>
             </div>
 
@@ -55,11 +54,11 @@ export function ContactFooter({
               <a href="#focus" className="hover:text-[#0B2228] transition-colors">
                 Focus
               </a>
+              <a href="#venture-discovery" className="hover:text-[#0B2228] transition-colors">
+                Venture Discovery
+              </a>
               <a href="#approach" className="hover:text-[#0B2228] transition-colors">
                 Approach
-              </a>
-              <a href="#research" className="hover:text-[#0B2228] transition-colors">
-                Research
               </a>
               <button
                 type="button"
