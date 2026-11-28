@@ -11,15 +11,12 @@ import { InquiryModal } from './components/InquiryModal';
 import { LegalModal } from './components/LegalModal';
 import { MandateSection } from './components/MandateSection';
 import { ProgramBriefModal } from './components/ProgramBriefModal';
-import { ResearchModal } from './components/ResearchModal';
-import { ResearchSection } from './components/ResearchSection';
+import { WorkflowDiscoverySection } from './components/WorkflowDiscoverySection';
+import { VentureDesk } from './components/VentureDesk';
 import { FOCUS_AREAS, type InquiryPreset, type OfferingItem } from './data/memorandum';
-import { BASELINE_RESEARCH_NOTES, type ResearchNote } from './data/research';
 import { DEFAULT_SITE_CONFIG, fetchSiteConfig, type SiteConfig } from './lib/inquiries';
-import { fetchPublishedResearchNotes } from './lib/research';
 
 const TRACK_PRESETS: Record<string, InquiryPreset> = {
-  discovery: { lane: 'partner', partnerType: 'discovery' },
   investment: { lane: 'founder', founderTrack: 'investment' },
   incubation: { lane: 'founder', founderTrack: 'incubation' },
   training: { lane: 'training', trainingFocus: 'governance' },
@@ -28,11 +25,13 @@ const TRACK_PRESETS: Record<string, InquiryPreset> = {
 };
 
 export default function App() {
+  return window.location.pathname === '/venture-desk' ? <VentureDesk /> : <AjentirSite />;
+}
+
+function AjentirSite() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [inquiryPreset, setInquiryPreset] = useState<InquiryPreset | null>(null);
   const [activeOffering, setActiveOffering] = useState<OfferingItem | null>(null);
-  const [activeResearch, setActiveResearch] = useState<ResearchNote | null>(null);
-  const [researchNotes, setResearchNotes] = useState<ResearchNote[]>(BASELINE_RESEARCH_NOTES);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [portalOpen, setPortalOpen] = useState(false);
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
@@ -42,13 +41,8 @@ export default function App() {
     setInquiryOpen(true);
   };
 
-  const refreshResearch = () => {
-    void fetchPublishedResearchNotes().then(setResearchNotes);
-  };
-
   useEffect(() => {
     void fetchSiteConfig().then(setSiteConfig);
-    refreshResearch();
   }, []);
 
   useEffect(() => {
@@ -69,7 +63,6 @@ export default function App() {
       if (e.key === 'Escape') {
         setInquiryOpen(false);
         setActiveOffering(null);
-        setActiveResearch(null);
         setPrivacyOpen(false);
         setPortalOpen(false);
       }
@@ -101,12 +94,9 @@ export default function App() {
           <main id="main-content">
             <HeroSection onOpenInquiry={() => openInquiry(null)} />
             <ArchitectureSection onSelectOffering={(offering) => setActiveOffering(offering)} />
+            <WorkflowDiscoverySection onOpenInquiry={(preset) => openInquiry(preset)} />
             <MandateSection />
             <FundISection onOpenInquiry={(preset) => openInquiry(preset)} />
-            <ResearchSection
-              notes={researchNotes}
-              onSelectNote={(note) => setActiveResearch(note)}
-            />
           </main>
 
           <ContactFooter
@@ -125,12 +115,6 @@ export default function App() {
             }}
           />
 
-          <ResearchModal
-            note={activeResearch}
-            onClose={() => setActiveResearch(null)}
-            onInquire={(preset) => openInquiry(preset)}
-          />
-
           <InquiryModal
             open={inquiryOpen}
             preset={inquiryPreset}
@@ -143,7 +127,6 @@ export default function App() {
             open={portalOpen}
             onClose={() => setPortalOpen(false)}
             onSiteConfigUpdated={(nextConfig) => setSiteConfig(nextConfig)}
-            onResearchUpdated={refreshResearch}
           />
         </div>
       </MotionConfig>
