@@ -260,7 +260,24 @@ function requireOwner(req: AuthenticatedRequest, res: Response, next: NextFuncti
 async function startServer() {
   const store = openDatabase(DB_PATH);
   const app = express();
-  const ventureDesk = createVentureDeskRouter();
+  const ventureDeskOrigins = new Set([
+    "https://kigheart.github.io",
+    ...(process.env.CORS_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean),
+  ]);
+  app.use("/api/venture-desk", (req: Request, res: Response, next: NextFunction) => {
+    const origin = req.headers.origin;
+    if (origin && ventureDeskOrigins.has(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+    }
+    if (req.method === "OPTIONS") {
+      res.status(origin && !ventureDeskOrigins.has(origin) ? 403 : 204).end();
+      return;
+    }
+    next();
+  });
   app.use("/api/venture-desk", ventureDesk.router);
 
   const trustedProxy = process.env.AJENTIR_TRUSTED_PROXY?.trim();
