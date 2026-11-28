@@ -1,28 +1,11 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  Timestamp,
-  updateDoc,
-  type Unsubscribe,
-} from 'firebase/firestore';
 import type { FounderTrack, InquiryLane, PartnerType, TrainingFocus } from '../data/memorandum';
 import {
-  db,
-  EMAIL_PATTERN,
-  handleFirestoreError,
-  isOwnerEmail,
-  OperationType,
-  PAYLOAD_LIMITS,
-  sanitizeWebsiteUrl,
-} from './firebase';
+  authHeaders,
+  clearPortalSession,
+  setPortalSession,
+  type PortalUser,
+} from './authSession';
+import { EMAIL_PATTERN, PAYLOAD_LIMITS, sanitizeWebsiteUrl } from './validation';
 
 export type InquirySubTrack = FounderTrack | TrainingFocus | PartnerType;
 export type InquiryStatus = 'new' | 'reviewing' | 'scheduled' | 'archived';
@@ -45,7 +28,6 @@ export interface CreateInquiryInput {
   email: string;
   website: string;
   teamSize: TeamSizeOption;
-  preferredSession?: string;
   message: string;
   honeypot?: string;
 }
@@ -59,7 +41,6 @@ export interface InquiryRecord {
   email: string;
   website: string;
   teamSize: TeamSizeOption;
-  preferredSession: string;
   message: string;
   status: InquiryStatus;
   stageTag: StageTag;
@@ -69,10 +50,10 @@ export interface InquiryRecord {
   updatedAt: Date | null;
 }
 
-export interface AdminInviteRecord {
+export interface TeamMemberRecord {
+  id: string;
   email: string;
   displayName: string;
-  role: 'admin';
   addedBy: string;
   createdAt: Date | null;
 }
@@ -84,32 +65,44 @@ export interface SiteConfig {
   updatedAt?: Date | null;
 }
 
+export interface AuthStatus {
+  envPasscodeConfigured: boolean;
+  ownerClaimed: boolean;
+  ownerEmailHint: string;
+}
+
+export interface AdminHealthStatus {
+  ok: boolean;
+  database: string;
+  emailAlertsConfigured: boolean;
+  webhookAlertsConfigured: boolean;
+}
+
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
   incubationStatus: 'Open',
   nextBriefingLabel: 'Monthly executive briefings · Nairobi & Virtual',
   partnerSandboxNote: 'Pilot sandbox slots open for banks and AI model providers',
 };
 
-const INQUIRIES_PATH = 'inquiries';
-const ADMINS_PATH = 'admins';
-const INVITES_PATH = 'admin_invites';
-const PUBLIC_CONFIG_COLLECTION = 'public_config';
-const PUBLIC_CONFIG_DOC = 'site';
+function parseIsoDate(value: unknown): Date | null {
+  if (typeof value !== 'string' || !value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+async function parseErrorMessage(res: Response, fallback: string): Promise<string> {
+  const data: unknown = await res.json().catch(() => null);
+  if (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string') {
+    return data.error;
+  }
+  return fallback;
+}
+
+function isStaticHosting(): boolean {
+  return typeof window !== 'undefined' && window.location.hostname.endsWith('.github.io');
+}
 
 export async function submitInquiry(input: CreateInquiryInput): Promise<{ id: string }> {
-  if (import.meta.env.VITE_INQUIRY_TRANSPORT === 'self-hosted') {
-    const response = await fetch('/api/inquiries', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...input, websiteUrl: input.honeypot ?? '' }),
-    });
-    const result: unknown = await response.json().catch(() => null);
-    if (!response.ok || !result || typeof result !== 'object' || !('id' in result) || typeof result.id !== 'string') {
-      throw new Error('Self-hosted inquiry submission failed.');
-    }
-    return { id: result.id };
-  }
-
   const fullName = input.fullName.trim().slice(0, PAYLOAD_LIMITS.fullNameMax);
   const company = input.company.trim().slice(0, PAYLOAD_LIMITS.companyMax);
   const email = input.email.trim().slice(0, PAYLOAD_LIMITS.emailMax);
@@ -121,9 +114,10 @@ export async function submitInquiry(input: CreateInquiryInput): Promise<{ id: st
     throw new Error('Please enter your name and a valid email address.');
   }
 
-  let createdId = '';
-  try {
-    const docRef = await addDoc(collection(db, INQUIRIES_PATH), {
+  const res = await fetch('/api/inquiries', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
       lane: input.lane,
       subTrack: input.subTrack,
       fullName,
@@ -131,113 +125,87 @@ export async function submitInquiry(input: CreateInquiryInput): Promise<{ id: st
       email,
       website,
       teamSize,
-      preferredSession: (input.preferredSession ?? '').trim().slice(0, 140),
       message,
-      status: 'new' as InquiryStatus,
-      stageTag: '' as StageTag,
-      designPartner: '',
-      notes: '',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    createdId = docRef.id;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, INQUIRIES_PATH);
+      websiteUrl: input.honeypot ?? '',
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Unable to submit inquiry right now.'));
   }
 
-  // Notifications are intentionally not sent from the public browser client.
-  // Use a trusted Firestore-triggered backend when server-side delivery is deployed.
-
-  return { id: createdId };
+  const result = (await res.json().catch(() => ({}))) as { id?: string };
+  return { id: typeof result.id === 'string' ? result.id : '' };
 }
 
-export async function checkAdminAccess(
-  uid: string,
-  email: string | null,
-  emailVerified: boolean,
-): Promise<boolean> {
-  if (!uid || !emailVerified) return false;
-  if (isOwnerEmail(email)) return true;
-
-  try {
-    const normalizedEmail = email?.trim().toLowerCase();
-    const uidSnap = await getDoc(doc(db, ADMINS_PATH, uid));
-    if (uidSnap.exists()) {
-      const admin = uidSnap.data();
-      if (
-        normalizedEmail &&
-        typeof admin.email === 'string' &&
-        admin.email.toLowerCase() === normalizedEmail &&
-        admin.role === 'admin'
-      ) {
-        return true;
-      }
-    }
-
-    if (normalizedEmail) {
-      const inviteSnap = await getDoc(doc(db, INVITES_PATH, normalizedEmail));
-      if (inviteSnap.exists()) {
-        const invite = inviteSnap.data();
-        return (
-          typeof invite.email === 'string' &&
-          invite.email.toLowerCase() === normalizedEmail &&
-          invite.role === 'admin'
-        );
-      }
-    }
-    return false;
-  } catch {
-    return false;
+export async function fetchAuthStatus(): Promise<AuthStatus> {
+  if (isStaticHosting()) {
+    return { envPasscodeConfigured: false, ownerClaimed: true, ownerEmailHint: '' };
   }
-}
-
-function toDate(value: unknown): Date | null {
-  if (value instanceof Timestamp) {
-    return value.toDate();
+  const res = await fetch('/api/auth/status');
+  if (!res.ok) {
+    throw new Error('Unable to reach server authentication.');
   }
-  return null;
+  return (await res.json()) as AuthStatus;
 }
 
-export function subscribeToInquiries(
-  onData: (items: InquiryRecord[]) => void,
-  onError: (err: Error) => void,
-): Unsubscribe {
-  const q = query(collection(db, INQUIRIES_PATH), orderBy('createdAt', 'desc'));
+export async function claimPortalPassword(input: {
+  displayName: string;
+  email: string;
+  password: string;
+}): Promise<PortalUser> {
+  const res = await fetch('/api/auth/claim', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Failed to set portal password.'));
+  }
+  const data = (await res.json()) as { token: string; user: PortalUser };
+  setPortalSession(data.token, data.user);
+  return data.user;
+}
 
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      const items: InquiryRecord[] = snapshot.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          lane: (data.lane as InquiryLane) ?? 'founder',
-          subTrack: (data.subTrack as InquirySubTrack) ?? 'investment',
-          fullName: typeof data.fullName === 'string' ? data.fullName : '',
-          company: typeof data.company === 'string' ? data.company : '',
-          email: typeof data.email === 'string' ? data.email : '',
-          website: typeof data.website === 'string' ? data.website : '',
-          teamSize: (data.teamSize as TeamSizeOption) ?? '',
-          preferredSession: typeof data.preferredSession === 'string' ? data.preferredSession : '',
-          message: typeof data.message === 'string' ? data.message : '',
-          status: (data.status as InquiryStatus) ?? 'new',
-          stageTag: (data.stageTag as StageTag) ?? '',
-          designPartner: typeof data.designPartner === 'string' ? data.designPartner : '',
-          notes: typeof data.notes === 'string' ? data.notes : '',
-          createdAt: toDate(data.createdAt),
-          updatedAt: toDate(data.updatedAt),
-        };
-      });
-      onData(items);
-    },
-    (error) => {
-      try {
-        handleFirestoreError(error, OperationType.LIST, INQUIRIES_PATH);
-      } catch (wrapped) {
-        onError(wrapped instanceof Error ? wrapped : new Error(String(wrapped)));
+export async function loginPortal(input: {
+  email?: string;
+  password: string;
+}): Promise<PortalUser> {
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Invalid password or email.'));
+  }
+  const data = (await res.json()) as { token: string; user: PortalUser };
+  setPortalSession(data.token, data.user);
+  return data.user;
+}
+
+export function logoutPortal(): void {
+  clearPortalSession();
+}
+
+export async function fetchInquiries(): Promise<InquiryRecord[]> {
+  const res = await fetch('/api/inquiries', { headers: authHeaders() });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Unable to load inquiries.'));
+  }
+  const data = (await res.json()) as {
+    items: Array<
+      Omit<InquiryRecord, 'createdAt' | 'updatedAt'> & {
+        createdAt: string;
+        updatedAt: string;
       }
-    },
-  );
+    >;
+  };
+  return (data.items ?? []).map((item) => ({
+    ...item,
+    createdAt: parseIsoDate(item.createdAt),
+    updatedAt: parseIsoDate(item.updatedAt),
+  }));
 }
 
 export async function updateInquiryTriage(
@@ -249,115 +217,101 @@ export async function updateInquiryTriage(
     notes: string;
   },
 ): Promise<void> {
-  const path = `${INQUIRIES_PATH}/${inquiryId}`;
-  try {
-    await updateDoc(doc(db, INQUIRIES_PATH, inquiryId), {
+  const res = await fetch(`/api/inquiries/${encodeURIComponent(inquiryId)}`, {
+    method: 'PATCH',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
       status: updates.status,
       stageTag: updates.stageTag,
       designPartner: updates.designPartner.trim().slice(0, PAYLOAD_LIMITS.designPartnerMax),
       notes: updates.notes.trim().slice(0, PAYLOAD_LIMITS.notesMax),
-      updatedAt: serverTimestamp(),
-    });
-  } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, path);
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Failed to save inquiry updates.'));
   }
 }
 
 export async function deleteInquiry(inquiryId: string): Promise<void> {
-  const path = `${INQUIRIES_PATH}/${inquiryId}`;
-  try {
-    await deleteDoc(doc(db, INQUIRIES_PATH, inquiryId));
-  } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+  const res = await fetch(`/api/inquiries/${encodeURIComponent(inquiryId)}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Failed to delete inquiry.'));
   }
 }
 
-export function subscribeToAdminInvites(
-  onData: (items: AdminInviteRecord[]) => void,
-  onError: (err: Error) => void,
-): Unsubscribe {
-  const q = query(collection(db, INVITES_PATH), orderBy('createdAt', 'desc'));
-  return onSnapshot(
-    q,
-    (snapshot) => {
-      const items: AdminInviteRecord[] = snapshot.docs.map((d) => {
-        const data = d.data();
-        return {
-          email: typeof data.email === 'string' ? data.email : d.id,
-          displayName: typeof data.displayName === 'string' ? data.displayName : '',
-          role: 'admin',
-          addedBy: typeof data.addedBy === 'string' ? data.addedBy : '',
-          createdAt: toDate(data.createdAt),
-        };
-      });
-      onData(items);
-    },
-    (error) => {
-      try {
-        handleFirestoreError(error, OperationType.LIST, INVITES_PATH);
-      } catch (wrapped) {
-        onError(wrapped instanceof Error ? wrapped : new Error(String(wrapped)));
-      }
-    },
-  );
+export async function fetchTeamMembers(): Promise<TeamMemberRecord[]> {
+  const res = await fetch('/api/team', { headers: authHeaders() });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Unable to load team members.'));
+  }
+  const data = (await res.json()) as {
+    items: Array<Omit<TeamMemberRecord, 'createdAt'> & { createdAt: string }>;
+  };
+  return (data.items ?? []).map((m) => ({
+    ...m,
+    createdAt: parseIsoDate(m.createdAt),
+  }));
 }
 
-export async function addAdminInvite(
-  rawEmail: string,
-  rawName: string,
-  addedByEmail: string,
-): Promise<void> {
-  const email = rawEmail.trim().toLowerCase().slice(0, PAYLOAD_LIMITS.emailMax);
-  const displayName = rawName.trim().slice(0, PAYLOAD_LIMITS.fullNameMax);
-
-  if (!EMAIL_PATTERN.test(email) || !displayName) {
-    throw new Error('Please enter a valid name and email address.');
+export async function addTeamMember(input: {
+  email: string;
+  displayName: string;
+  password: string;
+}): Promise<TeamMemberRecord> {
+  const res = await fetch('/api/team', {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Unable to add team member.'));
   }
+  const data = (await res.json()) as {
+    item: Omit<TeamMemberRecord, 'createdAt'> & { createdAt: string };
+  };
+  return { ...data.item, createdAt: parseIsoDate(data.item.createdAt) };
+}
 
-  const path = `${INVITES_PATH}/${email}`;
-  try {
-    await setDoc(doc(db, INVITES_PATH, email), {
-      email,
-      displayName,
-      role: 'admin',
-      addedBy: addedByEmail.trim().toLowerCase().slice(0, PAYLOAD_LIMITS.emailMax),
-      createdAt: serverTimestamp(),
-    });
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+export async function removeTeamMember(memberId: string): Promise<void> {
+  const res = await fetch(`/api/team/${encodeURIComponent(memberId)}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Unable to remove team member.'));
   }
 }
 
-export async function removeAdminInvite(email: string): Promise<void> {
-  const normalized = email.trim().toLowerCase();
-  const path = `${INVITES_PATH}/${normalized}`;
-  try {
-    await deleteDoc(doc(db, INVITES_PATH, normalized));
-  } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+export async function fetchAdminHealth(): Promise<AdminHealthStatus> {
+  const res = await fetch('/api/admin/health', { headers: authHeaders() });
+  if (!res.ok) {
+    throw new Error('Unable to inspect server health.');
   }
+  return (await res.json()) as AdminHealthStatus;
 }
 
 export async function fetchSiteConfig(): Promise<SiteConfig> {
-  const path = `${PUBLIC_CONFIG_COLLECTION}/${PUBLIC_CONFIG_DOC}`;
+  if (isStaticHosting()) {
+    return DEFAULT_SITE_CONFIG;
+  }
   try {
-    const snap = await getDoc(doc(db, PUBLIC_CONFIG_COLLECTION, PUBLIC_CONFIG_DOC));
-    if (!snap.exists()) {
-      return DEFAULT_SITE_CONFIG;
-    }
-    const data = snap.data();
+    const res = await fetch('/api/site-config');
+    if (!res.ok) return DEFAULT_SITE_CONFIG;
+    const data = (await res.json()) as {
+      incubationStatus?: IncubationStatus;
+      nextBriefingLabel?: string;
+      partnerSandboxNote?: string;
+      updatedAt?: string;
+    };
     return {
-      incubationStatus:
-        (data.incubationStatus as IncubationStatus) || DEFAULT_SITE_CONFIG.incubationStatus,
-      nextBriefingLabel:
-        typeof data.nextBriefingLabel === 'string' && data.nextBriefingLabel.trim()
-          ? data.nextBriefingLabel
-          : DEFAULT_SITE_CONFIG.nextBriefingLabel,
+      incubationStatus: data.incubationStatus ?? DEFAULT_SITE_CONFIG.incubationStatus,
+      nextBriefingLabel: data.nextBriefingLabel?.trim() || DEFAULT_SITE_CONFIG.nextBriefingLabel,
       partnerSandboxNote:
-        typeof data.partnerSandboxNote === 'string' && data.partnerSandboxNote.trim()
-          ? data.partnerSandboxNote
-          : DEFAULT_SITE_CONFIG.partnerSandboxNote,
-      updatedAt: toDate(data.updatedAt),
+        data.partnerSandboxNote?.trim() || DEFAULT_SITE_CONFIG.partnerSandboxNote,
+      updatedAt: parseIsoDate(data.updatedAt),
     };
   } catch {
     return DEFAULT_SITE_CONFIG;
@@ -365,16 +319,17 @@ export async function fetchSiteConfig(): Promise<SiteConfig> {
 }
 
 export async function saveSiteConfig(config: SiteConfig): Promise<void> {
-  const path = `${PUBLIC_CONFIG_COLLECTION}/${PUBLIC_CONFIG_DOC}`;
-  try {
-    await setDoc(doc(db, PUBLIC_CONFIG_COLLECTION, PUBLIC_CONFIG_DOC), {
+  const res = await fetch('/api/site-config', {
+    method: 'PUT',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
       incubationStatus: config.incubationStatus,
       nextBriefingLabel: config.nextBriefingLabel.trim().slice(0, PAYLOAD_LIMITS.nextBriefingMax),
       partnerSandboxNote: config.partnerSandboxNote.trim().slice(0, PAYLOAD_LIMITS.partnerSandboxMax),
-      updatedAt: serverTimestamp(),
-    });
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res, 'Failed to update live site configuration.'));
   }
 }
 
